@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 license = "GPL-3.0-only"
 authors = [{ name = "Skrriply" }]
 dependencies = [
+    "aiohttp>=3.13.5",
     "pydantic>=2.12.5",
     "pydantic-settings>=2.13.1",
 ]

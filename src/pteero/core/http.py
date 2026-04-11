@@ -47,8 +47,8 @@ class AsyncHTTPClient:
             **kwargs: Additional arguments to pass to the `aiohttp.ClientSession.request` method.
 
         Returns:
-            Any: The parsed response body. Can be a dict for JSON, a string for text,
-                 bytes for binary data, or `None`.
+            The parsed response body. Can be a dict for JSON, a string for text,
+            bytes for binary data, or `None`.
 
         Raises:
             RuntimeError: If the HTTP session is not initialized.

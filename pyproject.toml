@@ -12,3 +12,10 @@ dependencies = []
 Homepage = "https://github.com/Skrriply/pteero-bot"
 Issues = "https://github.com/Skrriply/pteero-bot/issues"
 Repository = "https://github.com/Skrriply/pteero-bot.git"
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.39.0",
+    "prek>=0.3.8",
+    "ruff>=0.15.10",
+]

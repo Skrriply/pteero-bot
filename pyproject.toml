@@ -1,0 +1,14 @@
+[project]
+name = "pteero"
+version = "0.1.0"
+description = "A Discord bot for managing self-hosted game servers."
+readme = "README.md"
+requires-python = ">=3.13"
+license = "GPL-3.0-only"
+authors = [{ name = "Skrriply" }]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Skrriply/pteero-bot"
+Issues = "https://github.com/Skrriply/pteero-bot/issues"
+Repository = "https://github.com/Skrriply/pteero-bot.git"

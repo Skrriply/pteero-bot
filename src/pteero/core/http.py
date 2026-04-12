@@ -10,20 +10,22 @@ import aiohttp
 if TYPE_CHECKING:
     from http import HTTPMethod
 
+    from pydantic import HttpUrl
+
 logger = logging.getLogger(__name__)
 
 
 class AsyncHTTPClient:
     """An asynchronous HTTP client wrapper around `aiohttp.ClientSession`."""
 
-    def __init__(self, base_url: str, headers: dict[str, str] | None = None):
+    def __init__(self, base_url: str | HttpUrl, headers: dict[str, str] | None = None):
         """Initializes the class.
 
         Args:
             base_url: The base URL for all requests.
             headers (optional): Default headers to include in every request. Defaults to `None`.
         """
-        self.base_url: str = base_url.rstrip("/")
+        self.base_url: str = str(base_url).rstrip("/")
         self.headers: dict[str, str] = headers or {}
 
         self._session: aiohttp.ClientSession | None = None

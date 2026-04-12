@@ -1,4 +1,4 @@
-from pydantic import SecretStr
+from pydantic import HttpUrl, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     # Discord
     discord_token: SecretStr
     discord_owner_id: int
+
+    # Pterodactyl
+    pterodactyl_url: HttpUrl
+    pterodactyl_api_key: SecretStr
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"

@@ -7,12 +7,14 @@ from http import HTTPMethod
 from typing import TYPE_CHECKING
 
 from pteero.services.base import BaseAPIClient
-from pteero.services.schemas.pterodactyl import ServerResourceResponse, ServerState
+from pteero.services.schemas.pterodactyl import (
+    PowerSignal,
+    ServerResourceResponse,
+    ServerState,
+)
 
 if TYPE_CHECKING:
     from pydantic import HttpUrl
-
-    from pteero.services.schemas.pterodactyl import PowerSignal
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +57,7 @@ class PterodactylClient(BaseAPIClient):
         while time.monotonic() < timeout:
             data = await self.get_server_resources(server_id)
 
-            if data and data.attributes.current_state == target_state.value:
+            if data and data.attributes.current_state == target_state:
                 logger.info(
                     f"Server {server_id} successfully reached state: {target_state.value}."
                 )

@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Unpack
 
 import aiohttp
 
@@ -40,7 +40,12 @@ class AsyncHTTPClient:
         if self._session and not self._session.closed:
             await self._session.close()
 
-    async def request(self, method: HTTPMethod, endpoint: str, **kwargs: Any) -> Any:
+    async def request(
+        self,
+        method: HTTPMethod,
+        endpoint: str,
+        **kwargs: Unpack[aiohttp.client._RequestOptions],
+    ) -> Any:
         """Executes an asynchronous HTTP request.
 
         Args:

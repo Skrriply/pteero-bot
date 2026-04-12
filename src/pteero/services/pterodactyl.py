@@ -20,7 +20,9 @@ logger = logging.getLogger(__name__)
 class PterodactylClient(BaseAPIClient):
     """Client for interacting with the Pterodactyl Client API."""
 
-    def __init__(self, api_url: str | HttpUrl, api_key: str) -> None:
+    def __init__(
+        self, api_url: str | HttpUrl, api_key: str, verify_ssl: bool = True
+    ) -> None:
         """Initializes the class."""
         headers: dict[str, str] = {
             "Authorization": f"Bearer {api_key}",
@@ -28,6 +30,7 @@ class PterodactylClient(BaseAPIClient):
             "Content-Type": "application/json",
         }
         super().__init__(api_url, headers=headers)
+        self.verify_ssl: bool = verify_ssl
 
     async def _wait_until_state(
         self,
@@ -81,7 +84,9 @@ class PterodactylClient(BaseAPIClient):
         endpoint = f"/api/client/servers/{server_id}/resources"
 
         try:
-            response = await self._http.request(HTTPMethod.GET, endpoint)
+            response = await self._http.request(
+                HTTPMethod.GET, endpoint, ssl=self.verify_ssl
+            )
 
             if not response:
                 return None
@@ -105,7 +110,9 @@ class PterodactylClient(BaseAPIClient):
         payload = {"signal": signal.value}
 
         try:
-            await self._http.request(HTTPMethod.POST, endpoint, json=payload)
+            await self._http.request(
+                HTTPMethod.POST, endpoint, json=payload, ssl=self.verify_ssl
+            )
             return await self._wait_until_state(
                 server_id,
                 ServerState.RUNNING

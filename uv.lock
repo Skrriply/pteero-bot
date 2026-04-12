@@ -122,6 +122,20 @@ wheels = [
 ]
 
 [[package]]
+name = "disnake"
+version = "2.12.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "typing-extensions" },
+    { name = "yarl" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6e/38/ea128bb6c40e23ac73edab97f5f4b5eb6ef1865e1ff3e7f02d6457ef03de/disnake-2.12.0.tar.gz", hash = "sha256:7cbef25d5f5968e24ccc6ec896d12a7d51581dfef7e27871e2992b025e071efe", size = 1084527, upload-time = "2026-02-21T18:12:08.251Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fe/fc/92c17c2e35267737ae1e1cd713e2beb7d7459030e1e2545d5eeb84aa4411/disnake-2.12.0-py3-none-any.whl", hash = "sha256:b2f2340bac5cd23262493ae615a5f7e03122b60193485e2eb8f5a358f79f0b4d", size = 1183905, upload-time = "2026-02-21T18:12:06.188Z" },
+]
+
+[[package]]
 name = "frozenlist"
 version = "1.8.0"
 source = { registry = "https://pypi.org/simple" }
@@ -399,6 +413,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
+    { name = "disnake" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
 ]
@@ -413,6 +428,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.13.5" },
+    { name = "disnake", specifier = ">=2.12.0" },
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "pydantic-settings", specifier = ">=2.13.1" },
 ]

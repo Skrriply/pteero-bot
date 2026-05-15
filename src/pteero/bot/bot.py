@@ -9,6 +9,7 @@ from disnake.ext import commands
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from pteero.core.database import DatabaseManager
     from pteero.services.pterodactyl import PterodactylClient
 
 logger = logging.getLogger(__name__)
@@ -19,6 +20,7 @@ class PteeroBot(commands.InteractionBot):
 
     def __init__(
         self,
+        database: DatabaseManager,
         pterodactyl_client: PterodactylClient,
         owner_id: int | None = None,
         intents: disnake.Intents | None = None,
@@ -31,6 +33,7 @@ class PteeroBot(commands.InteractionBot):
             intents: The specific Discord gateway intents.
         """
         super().__init__(owner_id=owner_id, intents=intents)
+        self.database: DatabaseManager = database
         self.ptero: PterodactylClient = pterodactyl_client
 
     async def on_ready(self) -> None:

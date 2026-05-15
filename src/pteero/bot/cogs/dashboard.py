@@ -7,6 +7,7 @@ import disnake
 from disnake.ext import commands, tasks
 
 from pteero.bot.views.dashboard import DashboardView, build_dashboard_embed
+from pteero.core.database import DashboardRecord
 
 if TYPE_CHECKING:
     from pteero.bot.bot import PteeroBot
@@ -55,17 +56,12 @@ class DashboardCog(commands.Cog):
 
     async def _restore_dashboards(self) -> None:
         """Restores dashboard views from the database upon bot restart."""
-        records = await self.bot.database.fetch_all(
-            "SELECT server_id, message_id FROM dashboards"
-        )
+        records = await self.bot.database.get_all_dashboards()
 
         restored_count = 0
         for record in records:
-            server_id = record["server_id"]
-            message_id = record["message_id"]
-
-            view = DashboardView(self.bot, server_id)
-            self.bot.add_view(view, message_id=message_id)
+            view = DashboardView(self.bot, record.server_id)
+            self.bot.add_view(view, message_id=record.message_id)
 
             restored_count += 1
 
@@ -76,43 +72,35 @@ class DashboardCog(commands.Cog):
     @tasks.loop(seconds=60.0)
     async def update_dashboards(self) -> None:
         """Background task that updates server dashboards."""
-        records = await self.bot.database.fetch_all(
-            "SELECT server_id, channel_id, message_id FROM dashboards"
-        )
+        records = await self.bot.database.get_all_dashboards()
 
         for record in records:
-            server_id = record["server_id"]
-            channel_id = record["channel_id"]
-            message_id = record["message_id"]
-
             try:
-                resources = await self.bot.ptero.get_server_resources(server_id)
+                resources = await self.bot.ptero.get_server_resources(record.server_id)
                 if not resources:
                     continue
 
-                channel = await self._get_channel(channel_id)
+                channel = await self._get_channel(record.channel_id)
 
                 if not channel:
                     logger.warning(
-                        f"Channel '{channel_id}' not found. Removing dashboard '{message_id}' from the database."
+                        f"Channel '{record.channel_id}' not found. Removing dashboard '{record.message_id}' from the database."
                     )
-                    await self.bot.database.execute(
-                        "DELETE FROM dashboards WHERE message_id = ?", (message_id,)
-                    )
+                    await self.bot.database.remove_dashboard(record.message_id)
                     continue
 
                 embed = build_dashboard_embed(resources)
-                message = channel.get_partial_message(message_id)
+                message = channel.get_partial_message(record.message_id)
                 await message.edit(embed=embed)
             except disnake.NotFound:
                 logger.warning(
-                    f"Dashboard message '{message_id}' was deleted by a user. Removing from the database."
+                    f"Dashboard message '{record.message_id}' was deleted by a user. Removing from the database."
                 )
-                await self.bot.database.execute(
-                    "DELETE FROM dashboards WHERE message_id = ?", (message_id,)
-                )
+                await self.bot.database.remove_dashboard(record.message_id)
             except disnake.HTTPException as e:
-                logger.error(f"Discord API error editing dashboard '{message_id}': {e}")
+                logger.error(
+                    f"Discord API error editing dashboard '{record.message_id}': {e}"
+                )
 
     @update_dashboards.before_loop
     async def before_update_dashboards(self) -> None:
@@ -156,10 +144,12 @@ class DashboardCog(commands.Cog):
         await interaction.followup.send(embed=embed, view=view)
 
         message = await interaction.original_response()
-        await self.bot.database.execute(
-            "INSERT INTO dashboards (server_id, channel_id, message_id) VALUES (?, ?, ?)",
-            (server_id, interaction.channel_id, message.id),
+        record = DashboardRecord(
+            server_id=server_id,
+            channel_id=interaction.channel_id,
+            message_id=message.id,
         )
+        await self.bot.database.add_dashboard(record)
 
         logger.info(f"Successfully saved dashboard for '{server_id}' to the database.")
 

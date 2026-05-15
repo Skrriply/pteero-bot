@@ -1,4 +1,5 @@
 import asyncio
+from pathlib import Path
 
 import disnake
 
@@ -6,6 +7,9 @@ from pteero.bot.bot import PteeroBot
 from pteero.core.config import settings
 from pteero.core.logger import setup_logging
 from pteero.services.pterodactyl import PterodactylClient
+
+BASE_DIR: Path = Path(__file__).resolve().parent
+COGS_PATH: Path = BASE_DIR / "bot" / "cogs"
 
 
 async def main() -> None:
@@ -27,6 +31,7 @@ async def main() -> None:
 
     try:
         await pterodactl_client.connect()
+        bot.load_cogs(COGS_PATH)
         await bot.start(settings.discord_token.get_secret_value())
     finally:
         await pterodactl_client.close()

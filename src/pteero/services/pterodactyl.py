@@ -6,6 +6,9 @@ import time
 from http import HTTPMethod
 from typing import TYPE_CHECKING
 
+import aiohttp
+from pydantic import ValidationError
+
 from pteero.services.base import BaseAPIClient
 from pteero.services.schemas.pterodactyl import (
     PowerSignal,
@@ -94,9 +97,16 @@ class PterodactylClient(BaseAPIClient):
                 return None
 
             return ServerResourceResponse.model_validate(response)
-        except Exception as e:
-            logger.error(f"Failed to fetch resources for server {server_id}: {e}")
-            return None
+        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+            logger.error(
+                f"Network error fetching resources for server {server_id}: {e}"
+            )
+        except ValidationError as e:
+            logger.error(
+                f"Data validation failed for server {server_id} resources: {e}"
+            )
+
+        return None
 
     async def send_power_signal(self, server_id: str, signal: PowerSignal) -> bool:
         """Sends a power signal to a specific server.
@@ -121,8 +131,9 @@ class PterodactylClient(BaseAPIClient):
                 if signal in {PowerSignal.START, PowerSignal.RESTART}
                 else ServerState.OFFLINE,
             )
-        except Exception as e:
+        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
             logger.error(
                 f"Failed to send '{signal.value}' signal to server {server_id}: {e}"
             )
-            return False
+
+        return False

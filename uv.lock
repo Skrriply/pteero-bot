@@ -437,15 +437,15 @@ dev = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.13.5" },
     { name = "disnake", specifier = ">=2.12.0" },
-    { name = "pydantic", specifier = ">=2.12.5" },
-    { name = "pydantic-settings", specifier = ">=2.13.1" },
+    { name = "pydantic", specifier = ">=2.13.4" },
+    { name = "pydantic-settings", specifier = ">=2.14.1" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "basedpyright", specifier = ">=1.39.0" },
-    { name = "prek", specifier = ">=0.3.8" },
-    { name = "ruff", specifier = ">=0.15.10" },
+    { name = "basedpyright", specifier = ">=1.39.4" },
+    { name = "prek", specifier = ">=0.4.0" },
+    { name = "ruff", specifier = ">=0.15.13" },
 ]
 
 [[package]]

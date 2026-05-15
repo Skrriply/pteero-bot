@@ -8,6 +8,7 @@ license = "GPL-3.0-only"
 authors = [{ name = "Skrriply" }]
 dependencies = [
     "aiohttp>=3.13.5",
+    "aiosqlite>=0.22.1",
     "disnake>=2.12.0",
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.1",

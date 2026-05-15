@@ -11,17 +11,17 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/DetachHead/basedpyright-prek-mirror
-    rev: 1.39.0
+    rev: 1.39.4
     hooks:
       - id: basedpyright
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.10
+    rev: v0.15.13
     hooks:
       - id: ruff-check
         args: [--fix]
       - id: ruff-format
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.6
+    rev: 0.11.14
     hooks:
       - id: uv-lock
       - id: uv-sync

@@ -30,17 +30,10 @@ class PteeroBot(commands.InteractionBot):
         """
         super().__init__(owner_id=owner_id, intents=intents)
         self.ptero: PterodactylClient = pterodactyl_client
-        self._is_initialized: bool = False
 
     async def on_ready(self) -> None:
         """Event triggered when the bot successfully connects to Discord."""
         logger.info(f"Bot authorized as '{self.user}' (ID: {self.user.id}).")
-
-        if not self._is_initialized:
-            logger.info("Initializing API HTTP sessions...")
-            await self.ptero.connect()
-
-            self._is_initialized = True
 
     @override
     async def close(self) -> None:

@@ -19,12 +19,17 @@ async def main() -> None:
         verify_ssl=settings.pterodactyl_verify_ssl,
     )
 
-    # Initializes and starts the bot
+    # Initializes the bot
     intents = disnake.Intents.none()
     bot = PteeroBot(
         pterodactl_client, owner_id=settings.discord_owner_id, intents=intents
     )
-    await bot.start(settings.discord_token.get_secret_value())
+
+    try:
+        await pterodactl_client.connect()
+        await bot.start(settings.discord_token.get_secret_value())
+    finally:
+        await pterodactl_client.close()
 
 
 if __name__ == "__main__":

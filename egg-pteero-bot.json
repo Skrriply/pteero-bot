@@ -13,7 +13,7 @@
     "Standard": "ghcr.io\/skrriply\/pteero-bot:latest"
   },
   "file_denylist": [],
-  "startup": "if [ \"${AUTO_UPDATE}\" == \"1\" ] || [ \"${AUTO_UPDATE}\" == \"true\" ]; then echo -e \"\\n\\033[1;36mPulling latest updates...\\033[0m\"; git pull; fi; \/usr\/local\/bin\/python -m uv sync --no-dev && \/usr\/local\/bin\/python -m uv run ${PY_FILE}",
+  "startup": "if [ \"${AUTO_UPDATE}\" == \"1\" ] || [ \"${AUTO_UPDATE}\" == \"true\" ]; then echo -e \"\\n\\033[1;36mPulling latest updates...\\033[0m\"; git pull; fi; \/bin\/uv sync --no-dev && \/bin\/uv run ${PY_FILE}",
   "config": {
     "files": "{}",
     "startup": "{}",
@@ -32,7 +32,7 @@
       "name": "Python file",
       "description": "The file that starts the bot",
       "env_variable": "PY_FILE",
-      "default_value": "\/home\/container\/src\/bot\/main.py",
+      "default_value": "\/home\/container\/src\/pteero\/main.py",
       "user_viewable": true,
       "user_editable": true,
       "rules": "required|string",

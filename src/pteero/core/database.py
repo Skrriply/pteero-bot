@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import aiosqlite
@@ -13,15 +12,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@dataclass(frozen=True, slots=True)
-class DashboardRecord:
-    """Domain model representing a Pterodactyl server dashboard."""
-
-    server_id: str
-    channel_id: int
-    message_id: int
-
-
 class DatabaseManager:
     """Manages asynchronous SQLite database connections and operations."""
 
@@ -31,7 +21,7 @@ class DatabaseManager:
         Args:
             database: The file path to the SQLite database.
         """
-        self.database: Path = database
+        self._database: Path = database
         self._connection: aiosqlite.Connection | None = None
 
     async def connect(self) -> None:
@@ -40,11 +30,9 @@ class DatabaseManager:
             logger.debug("Database connection already established. Skipping...")
             return
 
-        self._connection = await aiosqlite.connect(self.database)
+        self._connection = await aiosqlite.connect(self._database)
         self._connection.row_factory = aiosqlite.Row
-        logger.info(f"Connected to SQLite database at '{self.database}'.")
-
-        await self._setup_tables()
+        logger.info(f"Connected to SQLite database at '{self._database}'.")
 
     async def close(self) -> None:
         """Closes the database connection safely."""
@@ -56,32 +44,7 @@ class DatabaseManager:
         self._connection = None
         logger.info("Closed SQLite database connection.")
 
-    async def _setup_tables(self) -> None:
-        """Creates the necessary schema if it does not exist.
-
-        Raises:
-            RuntimeError: If the database connection has not been initialized.
-        """
-        if not self._connection:
-            logger.error(
-                "Failed to set up tables. Database connection is not initialized."
-            )
-            raise RuntimeError("Database connection is not initialized.")
-
-        await self._connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS dashboards (
-                message_id INTEGER PRIMARY KEY,
-                channel_id INTEGER NOT NULL,
-                server_id TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-        )
-        await self._connection.commit()
-        logger.info("Database tables verified and created successfully.")
-
-    async def _execute(self, query: str, parameters: tuple[Any, ...] = ()) -> None:
+    async def execute(self, query: str, parameters: tuple[Any, ...] = ()) -> None:
         """Executes a single query that modifies data (INSERT, UPDATE, DELETE).
 
         Args:
@@ -106,7 +69,7 @@ class DatabaseManager:
             )
             return None
 
-    async def _fetch_all(
+    async def fetch_all(
         self, query: str, parameters: tuple[Any, ...] = ()
     ) -> Iterable[aiosqlite.Row]:
         """Fetches all matching rows for a given query.
@@ -136,42 +99,3 @@ class DatabaseManager:
                 f"Failed to execute query: {query!r}. Parameters: {parameters}. Error: {e}"
             )
             return []
-
-    async def get_all_dashboards(self) -> list[DashboardRecord]:
-        """Retrieves all dashboard records from the database.
-
-        Returns:
-            A list of `DashboardRecord` objects.
-        """
-        query = "SELECT server_id, channel_id, message_id FROM dashboards"
-        rows = await self._fetch_all(query)
-
-        return [
-            DashboardRecord(
-                server_id=row["server_id"],
-                channel_id=row["channel_id"],
-                message_id=row["message_id"],
-            )
-            for row in rows
-        ]
-
-    async def add_dashboard(self, record: DashboardRecord) -> None:
-        """Saves a new dashboard record to the database.
-
-        Args:
-            record: The `DashboardRecord` instance.
-        """
-        await self._execute(
-            "INSERT INTO dashboards (server_id, channel_id, message_id) VALUES (?, ?, ?)",
-            (record.server_id, record.channel_id, record.message_id),
-        )
-
-    async def remove_dashboard(self, message_id: int) -> None:
-        """Removes a dashboard record from the database by its message ID.
-
-        Args:
-            message_id: The message ID of the dashboard to remove.
-        """
-        await self._execute(
-            "DELETE FROM dashboards WHERE message_id = ?", (message_id,)
-        )

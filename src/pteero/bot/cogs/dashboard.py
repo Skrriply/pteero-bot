@@ -8,10 +8,10 @@ import disnake
 from disnake.ext import commands, tasks
 
 from pteero.bot.views.dashboard import DashboardView, build_dashboard_embed
-from pteero.core.database import DashboardRecord
 
 if TYPE_CHECKING:
     from pteero.bot.bot import PteeroBot
+    from pteero.core.repositories.dashboard import DashboardRecord
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ class DashboardCog(commands.Cog):
 
     async def _restore_dashboards(self) -> None:
         """Restores dashboard views from the database upon bot restart."""
-        records = await self.bot.database.get_all_dashboards()
+        records = await self.bot.dashboards.get_all()
 
         restored_count = 0
         for record in records:
@@ -86,7 +86,7 @@ class DashboardCog(commands.Cog):
             logger.warning(
                 f"Channel '{record.channel_id}' not found. Removing dashboard '{record.message_id}' from the database."
             )
-            await self.bot.database.remove_dashboard(record.message_id)
+            await self.bot.dashboards.remove(record.message_id)
             return
 
         try:
@@ -97,7 +97,7 @@ class DashboardCog(commands.Cog):
             logger.warning(
                 f"Dashboard message '{record.message_id}' was deleted by a user. Removing from the database."
             )
-            await self.bot.database.remove_dashboard(record.message_id)
+            await self.bot.dashboards.remove(record.message_id)
         except disnake.HTTPException as e:
             logger.error(
                 f"Discord API error editing dashboard '{record.message_id}': {e}"
@@ -106,7 +106,7 @@ class DashboardCog(commands.Cog):
     @tasks.loop(seconds=60.0)
     async def update_dashboards(self) -> None:
         """Background task that updates server dashboards."""
-        records = await self.bot.database.get_all_dashboards()
+        records = await self.bot.dashboards.get_all()
 
         try:
             async with asyncio.TaskGroup() as task_group:
@@ -157,12 +157,7 @@ class DashboardCog(commands.Cog):
         await interaction.followup.send(embed=embed, view=view)
 
         message = await interaction.original_response()
-        record = DashboardRecord(
-            server_id=server_id,
-            channel_id=interaction.channel_id,
-            message_id=message.id,
-        )
-        await self.bot.database.add_dashboard(record)
+        await self.bot.dashboards.add(server_id, interaction.channel_id, message.id)
 
         logger.info(f"Successfully saved dashboard for '{server_id}' to the database.")
 

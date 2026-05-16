@@ -7,6 +7,8 @@ from pteero.bot.bot import PteeroBot
 from pteero.core.config import settings
 from pteero.core.database import DatabaseManager
 from pteero.core.logger import setup_logging
+from pteero.core.repositories import RepositoryContainer
+from pteero.core.repositories.dashboard import DashboardRepository
 from pteero.services.pterodactyl import PterodactylClient
 
 BASE_DIR: Path = Path(__file__).resolve().parent
@@ -20,6 +22,7 @@ async def main() -> None:
 
     # Initializes services
     database = DatabaseManager(DATABASE_PATH)
+    repositories = RepositoryContainer(dashboards=DashboardRepository(database))
     pterodactl_client = PterodactylClient(
         settings.pterodactyl_url,
         settings.pterodactyl_api_key.get_secret_value(),
@@ -29,7 +32,10 @@ async def main() -> None:
     # Initializes the bot
     intents = disnake.Intents.none()
     bot = PteeroBot(
-        database, pterodactl_client, owner_id=settings.discord_owner_id, intents=intents
+        repositories,
+        pterodactl_client,
+        owner_id=settings.discord_owner_id,
+        intents=intents,
     )
 
     try:

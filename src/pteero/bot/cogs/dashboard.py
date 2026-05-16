@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING
 
@@ -69,38 +70,50 @@ class DashboardCog(commands.Cog):
             f"The buttons for the {restored_count} control panels have been restored."
         )
 
+    async def _process_single_dashboard(self, record: DashboardRecord) -> None:
+        """Processes a single dashboard update concurrently.
+
+        Args:
+            record: The dashboard database record to update.
+        """
+
+        resources = await self.bot.ptero.get_server_resources(record.server_id)
+        if not resources:
+            return
+
+        channel = await self._get_channel(record.channel_id)
+        if not channel:
+            logger.warning(
+                f"Channel '{record.channel_id}' not found. Removing dashboard '{record.message_id}' from the database."
+            )
+            await self.bot.database.remove_dashboard(record.message_id)
+            return
+
+        try:
+            embed = build_dashboard_embed(resources)
+            message = channel.get_partial_message(record.message_id)
+            await message.edit(embed=embed)
+        except disnake.NotFound:
+            logger.warning(
+                f"Dashboard message '{record.message_id}' was deleted by a user. Removing from the database."
+            )
+            await self.bot.database.remove_dashboard(record.message_id)
+        except disnake.HTTPException as e:
+            logger.error(
+                f"Discord API error editing dashboard '{record.message_id}': {e}"
+            )
+
     @tasks.loop(seconds=60.0)
     async def update_dashboards(self) -> None:
         """Background task that updates server dashboards."""
         records = await self.bot.database.get_all_dashboards()
 
-        for record in records:
-            try:
-                resources = await self.bot.ptero.get_server_resources(record.server_id)
-                if not resources:
-                    continue
-
-                channel = await self._get_channel(record.channel_id)
-
-                if not channel:
-                    logger.warning(
-                        f"Channel '{record.channel_id}' not found. Removing dashboard '{record.message_id}' from the database."
-                    )
-                    await self.bot.database.remove_dashboard(record.message_id)
-                    continue
-
-                embed = build_dashboard_embed(resources)
-                message = channel.get_partial_message(record.message_id)
-                await message.edit(embed=embed)
-            except disnake.NotFound:
-                logger.warning(
-                    f"Dashboard message '{record.message_id}' was deleted by a user. Removing from the database."
-                )
-                await self.bot.database.remove_dashboard(record.message_id)
-            except disnake.HTTPException as e:
-                logger.error(
-                    f"Discord API error editing dashboard '{record.message_id}': {e}"
-                )
+        try:
+            async with asyncio.TaskGroup() as task_group:
+                for record in records:
+                    task_group.create_task(self._process_single_dashboard(record))
+        except ExceptionGroup as e:
+            logger.error(f"Multiple errors occurred during dashboard update cycle: {e}")
 
     @update_dashboards.before_loop
     async def before_update_dashboards(self) -> None:

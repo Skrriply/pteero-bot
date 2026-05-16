@@ -9,6 +9,7 @@ from pteero.core.database import DatabaseManager
 from pteero.core.logger import setup_logging
 from pteero.core.repositories import RepositoryContainer
 from pteero.core.repositories.dashboard import DashboardRepository
+from pteero.core.repositories.permissions import PermissionRepository
 from pteero.services.pterodactyl import PterodactylClient
 
 BASE_DIR: Path = Path(__file__).resolve().parent
@@ -22,7 +23,10 @@ async def main() -> None:
 
     # Initializes services
     database = DatabaseManager(DATABASE_PATH)
-    repositories = RepositoryContainer(dashboards=DashboardRepository(database))
+    repositories = RepositoryContainer(
+        permissions=PermissionRepository(database),
+        dashboards=DashboardRepository(database),
+    )
     pterodactl_client = PterodactylClient(
         settings.pterodactyl_url,
         settings.pterodactyl_api_key.get_secret_value(),
@@ -40,6 +44,7 @@ async def main() -> None:
 
     try:
         await database.connect()
+        await repositories.setup_schemes()
         await pterodactl_client.connect()
         bot.load_cogs(COGS_PATH)
         await bot.start(settings.discord_token.get_secret_value())

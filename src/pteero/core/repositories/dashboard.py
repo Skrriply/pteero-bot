@@ -23,7 +23,11 @@ class DashboardRepository:
     """Handles all database operations related to server dashboards."""
 
     def __init__(self, database_manager: DatabaseManager) -> None:
-        """Initializes the repository with the main database manager."""
+        """Initializes the class.
+
+        Args:
+            database_manager: The database manager instance.
+        """
         self._database_manager = database_manager
 
     async def setup_schema(self) -> None:
@@ -32,7 +36,7 @@ class DashboardRepository:
         Raises:
             RuntimeError: If the database connection has not been initialized.
         """
-        await self._database_manager.execute(
+        await self._database_manager.executescript(
             """
             CREATE TABLE IF NOT EXISTS dashboards (
                 message_id INTEGER PRIMARY KEY,

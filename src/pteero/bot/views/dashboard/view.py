@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 
 import disnake
 
+from pteero.core.repositories.permissions import PermissionAction
+from pteero.core.utils import check_permission
 from pteero.services.schemas.pterodactyl import PowerSignal
 
 if TYPE_CHECKING:
@@ -26,23 +28,6 @@ class DashboardView(disnake.ui.View):
         super().__init__(timeout=None)
         self.bot: PteeroBot = bot
         self.server_id: str = server_id
-
-    async def _is_owner(self, interaction: disnake.MessageInteraction) -> bool:
-        """Checks if the user interacting with the view is the owner of the bot.
-
-        Args:
-            interaction: The interaction context from the slash command.
-
-        Returns:
-            `True` if the user is the bot owner, `False` otherwise.
-        """
-        if await self.bot.is_owner(interaction.author):
-            return True
-
-        await interaction.response.send_message(
-            "⛔ У вас немає необхідних прав, щоб виконати цю дію.", ephemeral=True
-        )
-        return False
 
     async def _handle_power_action(
         self, interaction: disnake.MessageInteraction, signal: PowerSignal
@@ -77,8 +62,14 @@ class DashboardView(disnake.ui.View):
 
         Args:
             _: The button instance (unused).
-            interaction: The interaction context from the slash command.
+            interaction: The interaction context from the button press.
         """
+        has_permisison = await check_permission(
+            self.bot, interaction, self.server_id, PermissionAction.START
+        )
+        if not has_permisison:
+            return
+
         await self._handle_power_action(interaction, PowerSignal.START)
 
     @disnake.ui.button(
@@ -93,9 +84,12 @@ class DashboardView(disnake.ui.View):
 
         Args:
             _: The button instance (unused).
-            interaction: The interaction context from the slash command.
+            interaction: The interaction context from the button press.
         """
-        if not await self._is_owner(interaction):
+        has_permisison = await check_permission(
+            self.bot, interaction, self.server_id, PermissionAction.RESTART
+        )
+        if not has_permisison:
             return
 
         await self._handle_power_action(interaction, PowerSignal.RESTART)
@@ -110,9 +104,34 @@ class DashboardView(disnake.ui.View):
 
         Args:
             _: The button instance (unused).
-            interaction: The interaction context from the slash command.
+            interaction: The interaction context from the button press.
         """
-        if not await self._is_owner(interaction):
+        has_permisison = await check_permission(
+            self.bot, interaction, self.server_id, PermissionAction.STOP
+        )
+        if not has_permisison:
             return
 
         await self._handle_power_action(interaction, PowerSignal.STOP)
+
+    @disnake.ui.button(
+        label="☠️ Примусово зупинити",
+        style=disnake.ButtonStyle.secondary,
+        custom_id="ptero_kill",
+    )
+    async def kill_button(
+        self, _: disnake.ui.Button, interaction: disnake.MessageInteraction
+    ) -> None:
+        """Handles the stop button interaction.
+
+        Args:
+            _: The button instance (unused).
+            interaction: The interaction context from the button press.
+        """
+        has_permisison = await check_permission(
+            self.bot, interaction, self.server_id, PermissionAction.KILL
+        )
+        if not has_permisison:
+            return
+
+        await self._handle_power_action(interaction, PowerSignal.KILL)

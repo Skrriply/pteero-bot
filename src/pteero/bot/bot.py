@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
     from pteero.core.repositories import RepositoryContainer
     from pteero.core.repositories.dashboard import DashboardRepository
+    from pteero.core.repositories.permissions import PermissionRepository
     from pteero.services.pterodactyl import PterodactylClient
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,7 @@ class PteeroBot(commands.InteractionBot):
             intents: The specific Discord gateway intents.
         """
         super().__init__(owner_id=owner_id, intents=intents)
+        self.permissions: PermissionRepository = repositories.permissions
         self.dashboards: DashboardRepository = repositories.dashboards
         self.ptero: PterodactylClient = pterodactyl_client
 
@@ -62,13 +64,12 @@ class PteeroBot(commands.InteractionBot):
                 cog_name = filename.name[:-3]
                 logger.info(f"Cog '{cog_name}' has been loaded!")
                 self.load_extension(f"pteero.bot.cogs.{cog_name}")
-            except Exception:
-                logger.exception(f"Failed to load the cog: '{filename}'.")
+            except commands.ExtensionError as e:
+                logger.error(f"Failed to load the cog: '{filename}'. Error: {e}")
 
     @override
     async def close(self) -> None:
         """Overrides the default close method to close all API HTTP sessions."""
         logger.info("Closing API HTTP sessions...")
         await self.ptero.close()
-
         await super().close()

@@ -69,6 +69,29 @@ class DatabaseManager:
             )
             return None
 
+    async def executescript(self, query: str) -> None:
+        """Executes a single query that modifies data (INSERT, UPDATE, DELETE).
+
+        Args:
+            query: The SQL query string to execute.
+            parameters: A tuple of parameters to bind to the query.
+
+        Raises:
+            RuntimeError: If the database connection has not been initialized.
+        """
+        if not self._connection:
+            logger.error(
+                "Failed to execute query. Database connection is not initialized."
+            )
+            raise RuntimeError("Database connection is not initialized.")
+
+        try:
+            async with self._connection.executescript(query):
+                await self._connection.commit()
+        except aiosqlite.Error as e:
+            logger.error(f"Failed to execute query: {query!r}. Error: {e}")
+            return None
+
     async def fetch_all(
         self, query: str, parameters: tuple[Any, ...] = ()
     ) -> Iterable[aiosqlite.Row]:

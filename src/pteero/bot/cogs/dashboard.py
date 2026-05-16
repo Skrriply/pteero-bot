@@ -8,6 +8,8 @@ import disnake
 from disnake.ext import commands, tasks
 
 from pteero.bot.views.dashboard import DashboardView, build_dashboard_embed
+from pteero.core.repositories.permissions import PermissionAction
+from pteero.core.utils import check_permission
 
 if TYPE_CHECKING:
     from pteero.bot.bot import PteeroBot
@@ -113,7 +115,9 @@ class DashboardCog(commands.Cog):
                 for record in records:
                     task_group.create_task(self._process_single_dashboard(record))
         except ExceptionGroup as e:
-            logger.error(f"Multiple errors occurred during dashboard update cycle: {e}")
+            logger.error("Multiple errors occurred during dashboard update cycle:")
+            for exception in e.exceptions:
+                logger.error(f" - {exception.__class__.__name__}: {exception}")
 
     @update_dashboards.before_loop
     async def before_update_dashboards(self) -> None:
@@ -125,7 +129,6 @@ class DashboardCog(commands.Cog):
         await self.bot.wait_until_ready()
         await self._restore_dashboards()
 
-    @commands.is_owner()
     @commands.slash_command(
         name="dashboard",
         description="📊 Створює панель керування для вказаного сервера.",
@@ -140,6 +143,12 @@ class DashboardCog(commands.Cog):
             server_id: The unique identifier for the Pterodactyl server.
         """
         await interaction.response.defer()
+
+        has_permission = await check_permission(
+            self.bot, interaction, server_id, PermissionAction.SPAWN_DASHBOARDS
+        )
+        if not has_permission:
+            return
 
         resources = await self.bot.ptero.get_server_resources(server_id)
 
@@ -163,7 +172,7 @@ class DashboardCog(commands.Cog):
 
 
 def setup(bot: PteeroBot) -> None:
-    """Loads the DashboardCog into the bot.
+    """Loads the `DashboardCog` into the bot.
 
     Args:
         bot: The Discord bot instance.

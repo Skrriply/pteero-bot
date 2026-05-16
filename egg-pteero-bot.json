@@ -1,0 +1,62 @@
+{
+  "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+  "meta": {
+    "version": "PTDL_v2",
+    "update_url": null
+  },
+  "exported_at": "2026-05-16T00:00:00+00:00",
+  "name": "Pteero Bot",
+  "author": "email@localhost",
+  "description": "A Discord bot for managing self-hosted game servers.",
+  "features": [],
+  "docker_images": {
+    "Standard": "ghcr.io\/skrriply\/pteero-bot:latest"
+  },
+  "file_denylist": [],
+  "startup": "if [ \"${AUTO_UPDATE}\" == \"1\" ] || [ \"${AUTO_UPDATE}\" == \"true\" ]; then echo -e \"\\n\\033[1;36mPulling latest updates...\\033[0m\"; git pull; fi; \/usr\/local\/bin\/python -m uv sync --no-dev && \/usr\/local\/bin\/python -m uv run ${PY_FILE}",
+  "config": {
+    "files": "{}",
+    "startup": "{}",
+    "logs": "{}",
+    "stop": "^C"
+  },
+  "scripts": {
+    "installation": {
+      "script": "#!\/bin\/ash\r\n\r\necho \"Starting server initialization...\"\r\n\r\necho \"Updating packages and installing git...\"\r\napk update\r\napk add --no-cache git\r\n\r\nmkdir -p \/mnt\/server\r\ncd \/mnt\/server || exit 1\r\n\r\nif [ \"$(ls -A \/mnt\/server)\" ]; then\r\n    echo \"Directory is not empty. Skipping initial git clone.\"\r\nelse\r\n    echo \"Cloning repository...\"\r\n    git clone ${GIT_ADDRESS} .\r\nfi\r\n\r\necho \"Installation completed successfully!\"",
+      "container": "alpine:latest",
+      "entrypoint": "ash"
+    }
+  },
+  "variables": [
+    {
+      "name": "Python file",
+      "description": "The file that starts the bot",
+      "env_variable": "PY_FILE",
+      "default_value": "\/home\/container\/src\/bot\/main.py",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Auto-update",
+      "description": "Pull the latest files on startup",
+      "env_variable": "AUTO_UPDATE",
+      "default_value": "1",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|boolean",
+      "field_type": "text"
+    },
+    {
+      "name": "Git repository",
+      "description": "Git repository to clone",
+      "env_variable": "GIT_ADDRESS",
+      "default_value": "https:\/\/github.com\/Skrriply\/pteero-bot.git",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|url",
+      "field_type": "text"
+    }
+  ]
+}

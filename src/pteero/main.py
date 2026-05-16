@@ -21,6 +21,8 @@ async def main() -> None:
     """Main entry point for the bot."""
     setup_logging()
 
+    DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
+
     # Initializes services
     database = DatabaseManager(DATABASE_PATH)
     repositories = RepositoryContainer(

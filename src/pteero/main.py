@@ -44,7 +44,7 @@ async def main() -> None:
 
     try:
         await database.connect()
-        await repositories.setup_schemes()
+        await repositories.setup_schemas()
         await pterodactl_client.connect()
         bot.load_cogs(COGS_PATH)
         await bot.start(settings.discord_token.get_secret_value())

@@ -128,10 +128,10 @@ class DashboardView(disnake.ui.View):
             _: The button instance (unused).
             interaction: The interaction context from the button press.
         """
-        has_permisison = await check_permission(
+        has_permission = await check_permission(
             self.bot, interaction, self.server_id, PermissionAction.KILL
         )
-        if not has_permisison:
+        if not has_permission:
             return
 
         await self._handle_power_action(interaction, PowerSignal.KILL)

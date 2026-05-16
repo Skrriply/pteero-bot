@@ -15,6 +15,6 @@ class RepositoryContainer:
     permissions: PermissionRepository
     dashboards: DashboardRepository
 
-    async def setup_schemes(self) -> None:
+    async def setup_schemas(self) -> None:
         await self.permissions.setup_schema()
         await self.dashboards.setup_schema()

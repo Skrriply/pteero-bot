@@ -52,20 +52,20 @@ class PteeroBot(commands.InteractionBot):
         """
         logger.info(f"Loading cogs from '{cogs_dir}'...")
 
-        if not cogs_dir.exists():
+        if not cogs_dir.exists() or not cogs_dir.is_dir():
             logger.info("The directory doesn't exist! Skipping loading...")
             return
 
-        for filename in cogs_dir.iterdir():
-            if not filename.name.endswith(".py") or filename.name.startswith("_"):
+        for file_path in cogs_dir.glob("*.py"):
+            if file_path.name.startswith("_"):
                 continue
 
             try:
-                cog_name = filename.name[:-3]
-                logger.info(f"Cog '{cog_name}' has been loaded!")
+                cog_name = file_path.stem
                 self.load_extension(f"pteero.bot.cogs.{cog_name}")
+                logger.info(f"Cog '{cog_name}' has been loaded!")
             except commands.ExtensionError as e:
-                logger.error(f"Failed to load the cog: '{filename}'. Error: {e}")
+                logger.error(f"Failed to load the cog: '{file_path}'. Error: {e}")
 
     @override
     async def close(self) -> None:

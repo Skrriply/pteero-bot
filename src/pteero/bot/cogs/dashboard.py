@@ -14,6 +14,7 @@ from pteero.core.utils import check_permission
 if TYPE_CHECKING:
     from pteero.bot.bot import PteeroBot
     from pteero.core.repositories.dashboard import DashboardRecord
+    from pteero.services.schemas.pterodactyl import ServerResourceResponse
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ class DashboardCog(commands.Cog):
             bot: The Discord bot instance.
         """
         self.bot: PteeroBot = bot
+        self._previous_resources: dict[int, ServerResourceResponse] = {}
         self.update_dashboards.start()
 
     def cog_unload(self) -> None:
@@ -78,9 +80,13 @@ class DashboardCog(commands.Cog):
         Args:
             record: The dashboard database record to update.
         """
-
         resources = await self.bot.ptero.get_server_resources(record.server_id)
         if not resources:
+            return
+
+        # Skips if the server resources haven't changed
+        previous_resources = self._previous_resources.get(record.message_id)
+        if previous_resources == resources:
             return
 
         channel = await self._get_channel(record.channel_id)
@@ -89,17 +95,20 @@ class DashboardCog(commands.Cog):
                 f"Channel '{record.channel_id}' not found. Removing dashboard '{record.message_id}' from the database."
             )
             await self.bot.dashboards.remove(record.message_id)
+            self._previous_resources.pop(record.message_id, None)
             return
 
         try:
             embed = build_dashboard_embed(resources)
             message = channel.get_partial_message(record.message_id)
             await message.edit(embed=embed)
+            self._previous_resources[record.message_id] = resources
         except disnake.NotFound:
             logger.warning(
                 f"Dashboard message '{record.message_id}' was deleted by a user. Removing from the database."
             )
             await self.bot.dashboards.remove(record.message_id)
+            self._previous_resources.pop(record.message_id, None)
         except disnake.HTTPException as e:
             logger.error(
                 f"Discord API error editing dashboard '{record.message_id}': {e}"

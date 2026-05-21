@@ -99,8 +99,13 @@ class DashboardCog(commands.Cog):
             return
 
         try:
-            embed = build_dashboard_embed(resources)
+            server_info = await self.bot.ptero.get_server_info(record.server_id)
+
+            embed = build_dashboard_embed(
+                resources, server_info.name if server_info else None
+            )
             message = channel.get_partial_message(record.message_id)
+
             await message.edit(embed=embed)
             self._previous_resources[record.message_id] = resources
         except disnake.NotFound:

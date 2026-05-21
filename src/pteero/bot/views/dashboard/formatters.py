@@ -58,11 +58,14 @@ def _format_uptime(uptime_ms: int) -> str:
     return " ".join(parts)
 
 
-def build_dashboard_embed(resources: ServerResourceResponse) -> disnake.Embed:
+def build_dashboard_embed(
+    resources: ServerResourceResponse, server_name: str | None = None
+) -> disnake.Embed:
     """Builds a server dashboard embed.
 
     Args:
         resources: The server resource data returned from the Pterodactyl API.
+        server_name (optional): The human-readable name of the server.
 
     Returns:
         A `disnake.Embed` object.
@@ -71,7 +74,14 @@ def build_dashboard_embed(resources: ServerResourceResponse) -> disnake.Embed:
     stats = resources.attributes.resources
     state_emoji = STATE_EMOJIS.get(state, "⚪")
 
-    embed = disnake.Embed(title="🎮 Панель керування", color=disnake.Color.blurple())
+    embed = disnake.Embed(
+        title=(
+            f"🎮 Панель керування - {server_name}"
+            if server_name
+            else "🎮 Панель керування"
+        ),
+        color=disnake.Color.blurple(),
+    )
     embed.add_field(
         name=f"{state_emoji} Стан", value=f"{state.value.upper()}", inline=False
     )

@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 import disnake
 from disnake.ext import commands, tasks
 
+from pteero.bot.utils import check_permission
 from pteero.bot.views.dashboard import DashboardView, build_dashboard_embed
 from pteero.core.repositories.permissions import PermissionAction
-from pteero.core.utils import check_permission
 
 if TYPE_CHECKING:
     from pteero.bot.bot import PteeroBot

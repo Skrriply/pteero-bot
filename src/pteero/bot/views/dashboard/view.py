@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 
 import disnake
 
+from pteero.bot.utils import check_permission
 from pteero.core.repositories.permissions import PermissionAction
-from pteero.core.utils import check_permission
 from pteero.services.schemas.pterodactyl import PowerSignal
 
 if TYPE_CHECKING:

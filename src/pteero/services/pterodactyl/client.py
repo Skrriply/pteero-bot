@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 import aiohttp
 from pydantic import ValidationError
 
+from pteero.core.cache import CacheManager
 from pteero.services.pterodactyl.schemas import (
     PowerSignal,
     ServerListResponse,
@@ -30,12 +31,14 @@ class PterodactylClient:
     def __init__(
         self,
         http_client: AsyncHTTPClient,
+        cache_manager: CacheManager,
         api_url: str | HttpUrl,
         api_key: str,
         verify_ssl: bool = True,
     ) -> None:
         """Initializes the class."""
         self._http: AsyncHTTPClient = http_client
+        self._cache: CacheManager = cache_manager
         self._base_url: str = str(api_url).rstrip("/")
         self._verify_ssl: bool = verify_ssl
         self._headers: dict[str, str] = {
@@ -90,6 +93,10 @@ class PterodactylClient:
         """
         url = f"{self._base_url}/api/client"
 
+        cached_servers = self._cache.get("pterodactyl-servers")
+        if cached_servers:
+            return cached_servers
+
         try:
             response = await self._http.request(
                 HTTPMethod.GET,
@@ -101,7 +108,10 @@ class PterodactylClient:
             if not response:
                 return None
 
-            return ServerListResponse.model_validate(response)
+            servers_data = ServerListResponse.model_validate(response)
+            self._cache.set("pterodactyl-servers", servers_data, ttl=60)
+
+            return servers_data
         except (aiohttp.ClientError, asyncio.TimeoutError) as e:
             logger.error(f"Network error fetching server list: {e}")
         except ValidationError as e:

@@ -4,6 +4,7 @@ from pathlib import Path
 import disnake
 
 from pteero.bot.bot import PteeroBot
+from pteero.core.cache import CacheManager
 from pteero.core.config import settings
 from pteero.core.database import DatabaseManager
 from pteero.core.http import AsyncHTTPClient
@@ -26,6 +27,7 @@ async def main() -> None:
 
     # Initializes services
     http_client = AsyncHTTPClient()
+    cache_manager = CacheManager()
     database = DatabaseManager(DATABASE_PATH)
     repositories = RepositoryContainer(
         permissions=PermissionRepository(database),
@@ -33,6 +35,7 @@ async def main() -> None:
     )
     pterodactl_client = PterodactylClient(
         http_client,
+        cache_manager,
         settings.pterodactyl_url,
         settings.pterodactyl_api_key.get_secret_value(),
         verify_ssl=settings.pterodactyl_verify_ssl,

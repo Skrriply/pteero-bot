@@ -10,7 +10,6 @@ import aiohttp
 if TYPE_CHECKING:
     from http import HTTPMethod
 
-    from pydantic import HttpUrl
 
 logger = logging.getLogger(__name__)
 
@@ -18,22 +17,14 @@ logger = logging.getLogger(__name__)
 class AsyncHTTPClient:
     """An asynchronous HTTP client wrapper around `aiohttp.ClientSession`."""
 
-    def __init__(self, base_url: str | HttpUrl, headers: dict[str, str] | None = None):
-        """Initializes the class.
-
-        Args:
-            base_url: The base URL for all requests.
-            headers (optional): Default headers to include in every request. Defaults to `None`.
-        """
-        self.base_url: str = str(base_url).rstrip("/")
-        self.headers: dict[str, str] = headers or {}
-
+    def __init__(self):
+        """Initializes the class."""
         self._session: aiohttp.ClientSession | None = None
 
     async def connect(self) -> None:
         """Initializes the `aiohttp.ClientSession`."""
         if not self._session or self._session.closed:
-            self._session = aiohttp.ClientSession(headers=self.headers)
+            self._session = aiohttp.ClientSession()
 
     async def close(self) -> None:
         """Closes the `aiohttp.ClientSession`."""
@@ -43,7 +34,7 @@ class AsyncHTTPClient:
     async def request(
         self,
         method: HTTPMethod,
-        endpoint: str,
+        url: str,
         **kwargs: Unpack[aiohttp.client._RequestOptions],
     ) -> Any:
         """Executes an asynchronous HTTP request.
@@ -65,8 +56,6 @@ class AsyncHTTPClient:
         """
         if not self._session:
             raise RuntimeError("HTTP Client session is not initialized.")
-
-        url = f"{self.base_url}{endpoint}"
 
         try:
             async with self._session.request(method.value, url, **kwargs) as response:

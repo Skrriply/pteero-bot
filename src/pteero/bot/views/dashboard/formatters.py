@@ -1,6 +1,6 @@
 import disnake
 
-from pteero.services.schemas.pterodactyl import (
+from pteero.services.pterodactyl.schemas import (
     ServerResourceResponse,
     ServerState,
 )

@@ -9,8 +9,7 @@ from typing import TYPE_CHECKING
 import aiohttp
 from pydantic import ValidationError
 
-from pteero.services.base import BaseAPIClient
-from pteero.services.schemas.pterodactyl import (
+from pteero.services.pterodactyl.schemas import (
     PowerSignal,
     ServerListResponse,
     ServerResourceResponse,
@@ -20,23 +19,30 @@ from pteero.services.schemas.pterodactyl import (
 if TYPE_CHECKING:
     from pydantic import HttpUrl
 
+    from pteero.core.http import AsyncHTTPClient
+
 logger = logging.getLogger(__name__)
 
 
-class PterodactylClient(BaseAPIClient):
+class PterodactylClient:
     """Client for interacting with the Pterodactyl Client API."""
 
     def __init__(
-        self, api_url: str | HttpUrl, api_key: str, verify_ssl: bool = True
+        self,
+        http_client: AsyncHTTPClient,
+        api_url: str | HttpUrl,
+        api_key: str,
+        verify_ssl: bool = True,
     ) -> None:
         """Initializes the class."""
-        headers: dict[str, str] = {
+        self._http: AsyncHTTPClient = http_client
+        self._base_url: str = str(api_url).rstrip("/")
+        self._verify_ssl: bool = verify_ssl
+        self._headers: dict[str, str] = {
             "Authorization": f"Bearer {api_key}",
             "Accept": "application/json",
             "Content-Type": "application/json",
         }
-        super().__init__(api_url, headers=headers)
-        self.verify_ssl: bool = verify_ssl
 
     async def _wait_until_state(
         self,
@@ -82,11 +88,14 @@ class PterodactylClient(BaseAPIClient):
         Returns:
             `ServerListResponse` if successful, otherwise `None`.
         """
-        endpoint = "/api/client"
+        url = f"{self._base_url}/api/client"
 
         try:
             response = await self._http.request(
-                HTTPMethod.GET, endpoint, ssl=self.verify_ssl
+                HTTPMethod.GET,
+                url,
+                ssl=self._verify_ssl,
+                headers=self._headers,
             )
 
             if not response:
@@ -111,11 +120,14 @@ class PterodactylClient(BaseAPIClient):
         Returns:
             `ServerResourceResponse` if successfull, otherwise `None`.
         """
-        endpoint = f"/api/client/servers/{server_id}/resources"
+        url = f"{self._base_url}/api/client/servers/{server_id}/resources"
 
         try:
             response = await self._http.request(
-                HTTPMethod.GET, endpoint, ssl=self.verify_ssl
+                HTTPMethod.GET,
+                url,
+                ssl=self._verify_ssl,
+                headers=self._headers,
             )
 
             if not response:
@@ -143,12 +155,16 @@ class PterodactylClient(BaseAPIClient):
         Returns:
             `True` if the action was successfull, `False` otherwise.
         """
-        endpoint = f"/api/client/servers/{server_id}/power"
+        url = f"{self._base_url}/api/client/servers/{server_id}/power"
         payload = {"signal": signal.value}
 
         try:
             await self._http.request(
-                HTTPMethod.POST, endpoint, json=payload, ssl=self.verify_ssl
+                HTTPMethod.POST,
+                url,
+                json=payload,
+                ssl=self._verify_ssl,
+                headers=self._headers,
             )
             return await self._wait_until_state(
                 server_id,

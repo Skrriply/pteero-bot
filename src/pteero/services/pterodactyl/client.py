@@ -13,6 +13,7 @@ from pteero.core.cache import CacheManager
 from pteero.services.pterodactyl.schemas import (
     PowerSignal,
     ServerListResponse,
+    ServerMetaAttributes,
     ServerResourceResponse,
     ServerState,
 )
@@ -116,6 +117,26 @@ class PterodactylClient:
             logger.error(f"Network error fetching server list: {e}")
         except ValidationError as e:
             logger.error(f"Data validation failed for server list: {e}")
+
+        return None
+
+    async def get_server_info(self, server_id: str) -> ServerMetaAttributes | None:
+        """Retrieves metadata for a specific server.
+
+        Args:
+            server_id: The ID of the server.
+
+        Returns:
+            `ServerMetaAttributes` if found, otherwise `None`.
+        """
+        servers = await self.get_servers()
+
+        if not servers:
+            return None
+
+        for server in servers.data:
+            if server.attributes.identifier == server_id:
+                return server.attributes
 
         return None
 

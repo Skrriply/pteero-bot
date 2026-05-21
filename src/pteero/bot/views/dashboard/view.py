@@ -29,6 +29,28 @@ class DashboardView(disnake.ui.View):
         self.bot: PteeroBot = bot
         self.server_id: str = server_id
 
+    async def _require_permission(
+        self, interaction: disnake.MessageInteraction, action: PermissionAction
+    ) -> bool:
+        """Validates permissions and sends a UI error if unauthorized."""
+        is_authorized = await check_permission(
+            self.bot, interaction.author, self.server_id, action
+        )
+
+        if not is_authorized:
+            embed = disnake.Embed(
+                title="⚠️ Помилка",
+                description="У вас немає необхідних прав, щоб виконати цю дію.",
+                color=disnake.Color.yellow(),
+            )
+            if interaction.response.is_done():
+                await interaction.followup.send(embed=embed, ephemeral=True)
+            else:
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            return False
+
+        return True
+
     async def _handle_power_action(
         self, interaction: disnake.MessageInteraction, signal: PowerSignal
     ) -> None:
@@ -64,10 +86,7 @@ class DashboardView(disnake.ui.View):
             _: The button instance (unused).
             interaction: The interaction context from the button press.
         """
-        has_permisison = await check_permission(
-            self.bot, interaction, self.server_id, PermissionAction.START
-        )
-        if not has_permisison:
+        if not await self._require_permission(interaction, PermissionAction.START):
             return
 
         await self._handle_power_action(interaction, PowerSignal.START)
@@ -86,10 +105,7 @@ class DashboardView(disnake.ui.View):
             _: The button instance (unused).
             interaction: The interaction context from the button press.
         """
-        has_permisison = await check_permission(
-            self.bot, interaction, self.server_id, PermissionAction.RESTART
-        )
-        if not has_permisison:
+        if not await self._require_permission(interaction, PermissionAction.RESTART):
             return
 
         await self._handle_power_action(interaction, PowerSignal.RESTART)
@@ -106,10 +122,7 @@ class DashboardView(disnake.ui.View):
             _: The button instance (unused).
             interaction: The interaction context from the button press.
         """
-        has_permisison = await check_permission(
-            self.bot, interaction, self.server_id, PermissionAction.STOP
-        )
-        if not has_permisison:
+        if not await self._require_permission(interaction, PermissionAction.STOP):
             return
 
         await self._handle_power_action(interaction, PowerSignal.STOP)
@@ -128,10 +141,7 @@ class DashboardView(disnake.ui.View):
             _: The button instance (unused).
             interaction: The interaction context from the button press.
         """
-        has_permission = await check_permission(
-            self.bot, interaction, self.server_id, PermissionAction.KILL
-        )
-        if not has_permission:
+        if not await self._require_permission(interaction, PermissionAction.KILL):
             return
 
         await self._handle_power_action(interaction, PowerSignal.KILL)

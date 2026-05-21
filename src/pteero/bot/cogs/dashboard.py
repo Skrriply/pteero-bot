@@ -153,10 +153,16 @@ class DashboardCog(commands.Cog):
         """
         await interaction.response.defer()
 
-        has_permission = await check_permission(
-            self.bot, interaction, server_id, PermissionAction.SPAWN_DASHBOARDS
+        is_authorized = await check_permission(
+            self.bot, interaction.author, server_id, PermissionAction.SPAWN_DASHBOARDS
         )
-        if not has_permission:
+        if not is_authorized:
+            embed = disnake.Embed(
+                title="⚠️ Помилка",
+                description="У вас немає необхідних прав, щоб виконати цю дію.",
+                color=disnake.Color.yellow(),
+            )
+            await interaction.followup.send(embed=embed, ephemeral=True)
             return
 
         resources = await self.bot.ptero.get_server_resources(server_id)

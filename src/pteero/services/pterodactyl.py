@@ -12,6 +12,7 @@ from pydantic import ValidationError
 from pteero.services.base import BaseAPIClient
 from pteero.services.schemas.pterodactyl import (
     PowerSignal,
+    ServerListResponse,
     ServerResourceResponse,
     ServerState,
 )
@@ -74,6 +75,30 @@ class PterodactylClient(BaseAPIClient):
             f"Timeout ({timeout_seconds}s) reached while waiting for server {server_id} to become {target_state.value}."
         )
         return False
+
+    async def get_servers(self) -> ServerListResponse | None:
+        """Fetches all servers.
+
+        Returns:
+            `ServerListResponse` if successful, otherwise `None`.
+        """
+        endpoint = "/api/client"
+
+        try:
+            response = await self._http.request(
+                HTTPMethod.GET, endpoint, ssl=self.verify_ssl
+            )
+
+            if not response:
+                return None
+
+            return ServerListResponse.model_validate(response)
+        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+            logger.error(f"Network error fetching server list: {e}")
+        except ValidationError as e:
+            logger.error(f"Data validation failed for server list: {e}")
+
+        return None
 
     async def get_server_resources(
         self, server_id: str

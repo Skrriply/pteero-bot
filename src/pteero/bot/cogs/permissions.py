@@ -108,11 +108,11 @@ class PermissionsCog(commands.Cog):
             await interaction.followup.send(embed=embed, ephemeral=True)
 
     @grant_permission.autocomplete("server_id")
-    async def spawn_dashboard_autocomp(
+    async def grant_permission_autocomp(
         self, _: disnake.ApplicationCommandInteraction, current: str
     ) -> dict[str, str]:
         """
-        Autocomplete for the `server_id` argument of the `dashboard` command.
+        Autocomplete for the `server_id` argument of the `grant` command.
 
         Args:
             _: The Discord interaction object (unused).

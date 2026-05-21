@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import disnake
 from disnake.ext import commands, tasks
 
-from pteero.bot.utils import check_permission
+from pteero.bot.utils import check_permission, get_server_suggestions
 from pteero.bot.views.dashboard import DashboardView, build_dashboard_embed
 from pteero.core.repositories.permissions import PermissionAction
 
@@ -184,6 +184,27 @@ class DashboardCog(commands.Cog):
         await self.bot.dashboards.add(server_id, interaction.channel_id, message.id)
 
         logger.info(f"Successfully saved dashboard for '{server_id}' to the database.")
+
+    @spawn_dashboard.autocomplete("server_id")
+    async def spawn_dashboard_autocomp(
+        self, _: disnake.ApplicationCommandInteraction, current: str
+    ) -> dict[str, str]:
+        """
+        Autocomplete for the `server_id` argument of the `dashboard` command.
+
+        Args:
+            _: The Discord interaction object (unused).
+            current: The string the user is currently typing.
+
+        Returns:
+            A dictionary of autocomplete suggestions.
+        """
+        servers = await self.bot.ptero.get_servers()
+
+        if not servers:
+            return {}
+
+        return await get_server_suggestions(servers, current)
 
 
 def setup(bot: PteeroBot) -> None:

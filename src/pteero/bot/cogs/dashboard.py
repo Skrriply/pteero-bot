@@ -63,15 +63,12 @@ class DashboardCog(commands.Cog):
         """Restores dashboard views from the database upon bot restart."""
         records = await self.bot.dashboards.get_all()
 
-        restored_count = 0
         for record in records:
             view = DashboardView(self.bot, record.server_id)
             self.bot.add_view(view, message_id=record.message_id)
 
-            restored_count += 1
-
         logger.info(
-            f"The buttons for the {restored_count} control panels have been restored."
+            f"The buttons for the {len(records)} control panels have been restored."
         )
 
     async def _process_single_dashboard(self, record: DashboardRecord) -> None:
@@ -80,31 +77,21 @@ class DashboardCog(commands.Cog):
         Args:
             record: The dashboard database record to update.
         """
-        resources = await self.bot.ptero.get_server_resources(record.server_id)
-        if not resources:
-            return
-
-        # Skips if the server resources haven't changed
         previous_resources = self._previous_resources.get(record.message_id)
-        if previous_resources == resources:
-            return
-
-        channel = await self._get_channel(record.channel_id)
-        if not channel:
-            logger.warning(
-                f"Channel '{record.channel_id}' not found. Removing dashboard '{record.message_id}' from the database."
-            )
-            await self.bot.dashboards.remove(record.message_id)
-            self._previous_resources.pop(record.message_id, None)
+        resources = await self.bot.ptero.get_server_resources(record.server_id)
+        if not resources or resources == previous_resources:
             return
 
         try:
-            server_info = await self.bot.ptero.get_server_info(record.server_id)
+            channel = self.bot.get_partial_messageable(
+                record.channel_id, type=disnake.ChannelType.text
+            )
+            message = channel.get_partial_message(record.message_id)
 
+            server_info = await self.bot.ptero.get_server_info(record.server_id)
             embed = build_dashboard_embed(
                 resources, server_info.name if server_info else None
             )
-            message = channel.get_partial_message(record.message_id)
 
             await message.edit(embed=embed)
             self._previous_resources[record.message_id] = resources
@@ -164,14 +151,13 @@ class DashboardCog(commands.Cog):
         if not is_authorized:
             embed = disnake.Embed(
                 title="⚠️ Помилка",
-                description="У вас немає необхідних прав, щоб виконати цю дію.",
+                description="У вас немає необхідних дозволів, щоби виконати цю дію.",
                 color=disnake.Color.yellow(),
             )
             await interaction.followup.send(embed=embed, ephemeral=True)
             return
 
         resources = await self.bot.ptero.get_server_resources(server_id)
-
         if not resources:
             embed = disnake.Embed(
                 title="⚠️ Помилка",
@@ -181,11 +167,13 @@ class DashboardCog(commands.Cog):
             await interaction.followup.send(embed=embed, ephemeral=True)
             return
 
-        embed = build_dashboard_embed(resources)
+        server_info = await self.bot.ptero.get_server_info(server_id)
+        embed = build_dashboard_embed(
+            resources, server_info.name if server_info else None
+        )
         view = DashboardView(self.bot, server_id)
-        await interaction.followup.send(embed=embed, view=view)
 
-        message = await interaction.original_response()
+        message = await interaction.followup.send(embed=embed, view=view, wait=True)
         await self.bot.dashboards.add(server_id, interaction.channel_id, message.id)
 
         logger.info(f"Successfully saved dashboard for '{server_id}' to the database.")

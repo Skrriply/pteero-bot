@@ -5,10 +5,10 @@ from pteero.services.pterodactyl.schemas import (
     ServerState,
 )
 
-STATE_EMOJIS = {
+STATE_EMOJIS: dict[ServerState, str] = {
     ServerState.RUNNING: "🟢",
     ServerState.STARTING: "🟡",
-    ServerState.STOPPING: "🔴",
+    ServerState.STOPPING: "🟡",
     ServerState.OFFLINE: "🔴",
 }
 
@@ -42,10 +42,9 @@ def _format_uptime(uptime_ms: int) -> str:
     Returns:
         A formatted string representing the duration.
     """
-    total_seconds = uptime_ms // 1000
-    days, remainder = divmod(total_seconds, 86400)
-    hours, remainder = divmod(remainder, 3600)
-    minutes = remainder // 60
+    total_minutes = uptime_ms // 60000
+    days, remainder = divmod(total_minutes, 1440)
+    hours, minutes = divmod(remainder, 60)
 
     parts = []
     if days > 0:

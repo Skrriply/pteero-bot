@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
 from enum import IntFlag, auto
-from typing import TYPE_CHECKING, Literal, Self
+from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
     from pteero.core.database import DatabaseManager
@@ -20,51 +19,6 @@ class PermissionAction(IntFlag):
     RESTART = auto()  # 4
     KILL = auto()  # 8
     SPAWN_DASHBOARDS = auto()  # 16
-
-    @classmethod
-    def from_booleans(
-        cls: type[Self],
-        start: bool,
-        stop: bool,
-        restart: bool,
-        kill: bool,
-        spawn_dashboards: bool,
-    ) -> PermissionAction:
-        """Constructs a bitmask from boolean flags.
-
-        Args:
-            start: Whether the user can start the server.
-            stop: Whether the user can stop the server.
-            restart: Whether the user can restart the server.
-            kill: Whether the user can forcibly kill the server.
-            spawn_dashboards: Whether the user can spawn new control dashboards.
-
-        Returns:
-            A combined `PermissionAction` flag representing all truthy inputs.
-        """
-        mask = cls.NONE
-        if start:
-            mask |= cls.START
-        if stop:
-            mask |= cls.STOP
-        if restart:
-            mask |= cls.RESTART
-        if kill:
-            mask |= cls.KILL
-        if spawn_dashboards:
-            mask |= cls.SPAWN_DASHBOARDS
-
-        return mask
-
-
-@dataclass(frozen=True, slots=True)
-class PermissionRecord:
-    """Domain model representing a set of permissions for a specific Discord entity."""
-
-    entity_id: int
-    entity_type: Literal["user", "role"]
-    server_id: str
-    permissions: PermissionAction
 
 
 class PermissionRepository:
@@ -86,101 +40,151 @@ class PermissionRepository:
         """
         await self._database_manager.executescript(
             """
-            CREATE TABLE IF NOT EXISTS global_admins (
-                discord_id INTEGER PRIMARY KEY
-            );
-
             CREATE TABLE IF NOT EXISTS server_permissions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                discord_entity_id INTEGER NOT NULL,
+                entity_id INTEGER NOT NULL,
                 entity_type TEXT NOT NULL CHECK(entity_type IN ('user', 'role')),
                 server_id TEXT NOT NULL,
-                permissions INTEGER DEFAULT 0,
-                UNIQUE(discord_entity_id, server_id)
+                allows INTEGER DEFAULT 0,
+                denies INTEGER DEFAULT 0,
+                UNIQUE(entity_id, server_id)
             );
             """
         )
         logger.info("Permissions schema verified.")
 
-    async def is_global_admin(self, discord_id: int) -> bool:
-        """Checks if a Discord user possesses global administrator privileges.
+    async def get_raw_permissions(
+        self, entity_id: int, server_id: str
+    ) -> tuple[PermissionAction, PermissionAction]:
+        """Returns explicit local allows and denies masks for a single entity record.
 
         Args:
-            discord_id: The Discord ID of the user to check.
+            entity_id: The Discord ID of the user or role.
+            server_id: The unique identifier of the Pterodactyl server or "ALL".
 
         Returns:
-            `True` if the user is a global administrator, `False` otherwise.
+            A tuple of `PermissionAction` bitmasks formatted as (allows, denies).
         """
         rows = await self._database_manager.fetch_all(
-            "SELECT 1 FROM global_admins WHERE discord_id = ?", (discord_id,)
+            "SELECT allows, denies FROM server_permissions WHERE entity_id = ? AND server_id = ?",
+            (entity_id, server_id),
         )
-        return True if rows else False
+
+        if not rows:
+            return PermissionAction.NONE, PermissionAction.NONE
+
+        return PermissionAction(rows[0]["allows"]), PermissionAction(rows[0]["denies"])  # pyright: ignore[reportIndexIssue]
 
     async def has_server_permission(
         self,
         user_id: int,
-        role_ids: list[int],
+        permission: PermissionAction,
         server_id: str,
-        action: PermissionAction,
+        role_ids: set[int] = set(),
     ) -> bool:
         """Evaluates if a user (or any of their roles) is authorized for a specific action.
 
         Args:
             user_id: The Discord ID of the user.
-            role_ids: A list of Discord Role IDs currently held by the user.
-            server_id: The Pterodactyl server ID being targeted.
-            action: The specific `PermissionAction` flag to verify.
+            permission: The specific `PermissionAction` flag to verify.
+            server_id: The unique identifier of the Pterodactyl server or "ALL".
+            role_ids (optional): A set of Discord role IDs held by the user. Defaults to empty set.
 
         Returns:
-            `True` if the user or one of their roles has the requested permission,
-            `False` otherwise.
+            `True` if the user or one of their roles has the requested permission, `False` otherwise.
         """
-        if await self.is_global_admin(user_id):
-            return True
-
-        entity_ids = [user_id] + role_ids
+        entity_ids = [user_id, *role_ids]
         placeholders = ",".join("?" for _ in entity_ids)
 
         rows = await self._database_manager.fetch_all(
             f"""
-                SELECT permissions FROM server_permissions
-                WHERE server_id = ? AND discord_entity_id IN ({placeholders})
+            SELECT entity_id, server_id, allows, denies
+            FROM server_permissions
+            WHERE server_id IN (?, 'ALL') AND entity_id IN ({placeholders})
             """,
             (server_id, *entity_ids),
         )
+        data = {
+            (row["entity_id"], row["server_id"]): (row["allows"], row["denies"])
+            for row in rows
+        }
 
-        return any((row["permissions"] & action.value) == action.value for row in rows)
+        evaluation_levels = [
+            ([user_id], server_id),  # 1. User -> Local
+            ([user_id], "ALL"),  # 2. User -> Global
+            (role_ids, server_id),  # 3. Roles -> Local
+            (role_ids, "ALL"),  # 4. Roles -> Global
+        ]
+
+        for entities, scope in evaluation_levels:
+            allow_flag = False
+            deny_flag = False
+
+            for entity_id in entities:
+                allow, deny = data.get((entity_id, scope), (0, 0))
+                if allow & permission.value:
+                    allow_flag = True
+                if deny & permission.value:
+                    deny_flag = True
+
+            if allow_flag:
+                return True
+            if deny_flag:
+                return False
+
+        return False
+
+    async def get_permission_sources(
+        self, entity_id: int, server_id: str, role_ids: set[int] = set()
+    ) -> list[dict[str, Any]]:
+        """Fetches all layout database rule sets contributing to an entity's permission state.
+
+        Args:
+            user_id: The Discord ID of the user or role.
+            server_id: The unique identifier of the Pterodactyl server or "ALL".
+            role_ids (optional): A set of Discord role IDs held by the user. Defaults to empty set.
+
+        Returns:
+            A list of dictionary raw record rows.
+        """
+        entity_ids = {entity_id, *role_ids}
+        placeholders = ",".join("?" for _ in entity_ids)
+
+        rows = await self._database_manager.fetch_all(
+            f"""
+            SELECT entity_id, entity_type, server_id, allows, denies
+            FROM server_permissions
+            WHERE server_id IN (?, 'ALL') AND entity_id IN ({placeholders})
+            """,
+            (server_id, *entity_ids),
+        )
+        return [dict(row) for row in rows]
 
     async def set_permission(
         self,
         entity_id: int,
         entity_type: Literal["user", "role"],
+        allowed: PermissionAction,
+        denied: PermissionAction,
         server_id: str,
-        permissions: PermissionAction,
     ) -> None:
         """Sets the permissions for a user or role for a specific server.
 
         Args:
             entity_id: The Discord ID of the user or role.
             entity_type: The type of entity ("user" or "role").
-            server_id: The Pterodactyl server ID being targeted.
-            permissions: The specific `PermissionAction` bitmask to apply.
+            server_id: The unique identifier of the Pterodactyl server or "ALL".
+            allows: Granted bitwise permission values to update.
+            denies: Restricted bitwise permission values to update.
         """
         await self._database_manager.execute(
             """
-                INSERT INTO server_permissions
-                (discord_entity_id, entity_type, server_id, permissions)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT(discord_entity_id, server_id) DO UPDATE SET
-                    permissions = excluded.permissions
+            INSERT INTO server_permissions
+            (entity_id, entity_type, server_id, allows, denies)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(entity_id, server_id) DO UPDATE SET
+                allows = excluded.allows,
+                denies = excluded.denies
             """,
-            (
-                entity_id,
-                entity_type,
-                server_id,
-                permissions.value,
-            ),
-        )
-        logger.info(
-            f"Updated permissions for {entity_type} '{entity_id}' for server '{server_id}'."
+            (entity_id, entity_type, server_id, allowed.value, denied.value),
         )

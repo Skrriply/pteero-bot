@@ -64,7 +64,7 @@ def build_dashboard_embed(
 
     Args:
         resources: The server resource data returned from the Pterodactyl API.
-        server_name (optional): The human-readable name of the server.
+        server_name (optional): The human-readable name of the server. Defaults to `None`.
 
     Returns:
         A `disnake.Embed` object.

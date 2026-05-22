@@ -13,11 +13,29 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def extract_role_ids(entity: disnake.User | disnake.Member | disnake.Role) -> set[int]:
+    """Safely extracts role IDs and the @everyone (guild ID) role from an entity.
+
+    Args:
+        entity: The Discord user, member or role.
+
+    Returns:
+        A set of unique role identifiers associated with the entity.
+    """
+    role_ids: set[int] = set()
+
+    if isinstance(entity, disnake.Member):
+        role_ids = {role.id for role in filter(None, entity.roles)}
+        role_ids.add(entity.guild.id)
+
+    return role_ids
+
+
 async def check_permission(
     bot: PteeroBot,
     user: disnake.User | disnake.Member,
     server_id: str,
-    action: PermissionAction,
+    permission: PermissionAction,
 ) -> bool:
     """Evaluates whether the interacting user has the specified permission.
 
@@ -25,7 +43,7 @@ async def check_permission(
         bot: The Discord bot instance.
         user: The Discord user or member to evaluate.
         server_id: The Pterodactyl server ID.
-        action: The specific `PermissionAction` flag to verify.
+        permission: The specific `PermissionAction` flag to verify.
 
     Returns:
         `True` if the user is authorized, `False` otherwise.
@@ -33,13 +51,11 @@ async def check_permission(
     if await bot.is_owner(user):
         return True
 
-    role_ids = [role.id for role in filter(None, getattr(user, "roles", []))]
-
     return await bot.permissions.has_server_permission(
-        user_id=user.id,
-        role_ids=role_ids,
-        server_id=server_id,
-        action=action,
+        user.id,
+        permission,
+        server_id,
+        role_ids=extract_role_ids(user),
     )
 
 

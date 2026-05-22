@@ -43,6 +43,7 @@ async def main() -> None:
 
     # Initializes the bot
     intents = disnake.Intents.none()
+    intents.guilds = True
     bot = PteeroBot(
         repositories,
         pterodactl_client,

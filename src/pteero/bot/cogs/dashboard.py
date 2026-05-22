@@ -36,29 +36,6 @@ class DashboardCog(commands.Cog):
         """Cancels the update task, when cog is unloaded."""
         self.update_dashboards.cancel()
 
-    async def _get_channel(self, channel_id: int) -> disnake.TextChannel | None:
-        """Retrieves or fetches a text channel by its ID.
-
-        Attempts to get the channel from the bot's internal cache. If it is not
-        cached, it makes an API call to fetch it.
-
-        Args:
-            channel_id: The ID of the channel to retrieve.
-
-        Returns:
-            The text channel if found, otherwise `None`.
-        """
-        channel = self.bot.get_channel(channel_id)
-
-        if not channel:
-            try:
-                channel = await self.bot.fetch_channel(channel_id)
-            except (disnake.NotFound, disnake.Forbidden):
-                logger.warning(f"Channel '{channel_id}' not found or access denied.")
-                return None
-
-        return channel if isinstance(channel, disnake.TextChannel) else None
-
     async def _restore_dashboards(self) -> None:
         """Restores dashboard views from the database upon bot restart."""
         records = await self.bot.dashboards.get_all()

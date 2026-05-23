@@ -1,0 +1,61 @@
+{
+  "cmd_permissions_desc": "🛡️ Базова команда керування дозволами.",
+  "cmd_manage_desc": "🛡️ Змінити дозволи користувача або ролі.",
+  "cmd_dashboard_desc": "📊 Створити панель керування для вказаного сервера.",
+
+  "error_title": "⚠️ Помилка",
+  "error_no_permission": "У вас немає необхідних дозволів, щоби виконати цю дію.",
+  "error_connect": "Не вдалося під'єднатися до сервера.\nПеревірте ID сервера та спробуйте ще раз.",
+
+  "autocomplete_all_servers": "Усі сервери",
+
+  "emoji_action_start": "▶️",
+  "emoji_action_restart": "🔄",
+  "emoji_action_stop": "⏹️",
+  "emoji_action_kill": "☠️",
+  "emoji_action_spawn": "📊",
+
+  "emoji_state_running": "🟢",
+  "emoji_state_starting": "🟡",
+  "emoji_state_stopping": "🟡",
+  "emoji_state_offline": "🔴",
+  "emoji_state_unknown": "⚪",
+
+  "action_start": "Запустити",
+  "action_restart": "Перезапустити",
+  "action_stop": "Зупинити",
+  "action_kill": "Прим. зупинити",
+  "action_spawn_dashboards": "Створення панелей",
+
+  "signal_sending": "⏳ Надсилаю сигнал `{signal}`...",
+  "signal_success": "✅ Команду `{signal}` успішно виконано!",
+  "signal_error": "❌ Не вдалося виконати команду `{signal}`!",
+
+  "perm_display_all": "**Усі сервери**",
+  "perm_embed_title": "🛡️ Керування дозволами",
+  "perm_embed_desc": "Налаштування дозволів {entity} для {server_name}.",
+  "perm_embed_owner_name": "👑 Ви є власником бота",
+  "perm_embed_owner_value": "Ви маєте безумовний і повний доступ до всіх дій.",
+  "perm_src_personal_global": "особистого глобального правила",
+  "perm_src_role_global": "глобального правила цієї ролі",
+  "perm_src_role_local": "дозволів ролі {role}",
+  "perm_src_for_all": " для всіх серверів",
+  "perm_status_allowed": "✅ Дозволено",
+  "perm_status_denied": "❌ Заборонено",
+  "perm_status_allowed_inherited": "✅ Дозволено *(успадковано від {sources})*",
+  "perm_status_denied_inherited": "❌ Заборонено *(успадковано від {sources})*",
+  "perm_status_not_set": "❔ Не задано",
+  "perm_embed_field_name": "Дозволи:",
+  "perm_embed_footer": "✅ Дозволено • ❌ Заборонено • ❔ Не задано",
+
+  "dash_embed_title": "🎮 Панель керування",
+  "dash_embed_title_server": "🎮 Панель керування - {server_name}",
+  "dash_embed_state": "Стан",
+  "dash_embed_cpu": "💻 ЦПУ",
+  "dash_embed_ram": "🧠 ОЗУ",
+  "dash_embed_disk": "💽 Диск",
+  "dash_embed_net_in": "⬇️ Мережа (Вхід)",
+  "dash_embed_net_out": "⬆️ Мережа (Вихід)",
+  "dash_embed_uptime": "⏳ Час роботи",
+  "dash_embed_footer": "Автоматично оновлюється щохвилини."
+}

@@ -1,0 +1,61 @@
+{
+  "cmd_perm_base_desc": "🛡️ Base command for managing permissions.",
+  "cmd_perm_manage_desc": "🛡️ Change permissions for a user or role.",
+  "cmd_dashboard_desc": "📊 Spawn a control panel for the specified server.",
+
+  "error_title": "⚠️ Error",
+  "error_no_permission": "You don't have the required permissions to perform this action.",
+  "error_connect": "Could not connect to the server.\nPlease check the server ID and try again.",
+
+  "autocomplete_all_servers": "All servers",
+
+  "emoji_action_start": "▶️",
+  "emoji_action_restart": "🔄",
+  "emoji_action_stop": "⏹️",
+  "emoji_action_kill": "☠️",
+  "emoji_action_spawn": "📊",
+
+  "emoji_state_running": "🟢",
+  "emoji_state_starting": "🟡",
+  "emoji_state_stopping": "🟡",
+  "emoji_state_offline": "🔴",
+  "emoji_state_unknown": "⚪",
+
+  "action_start": "Start",
+  "action_restart": "Restart",
+  "action_stop": "Stop",
+  "action_kill": "Kill",
+  "action_spawn_dashboards": "Spawn Dashboards",
+
+  "signal_sending": "⏳ Sending `{signal}` signal...",
+  "signal_success": "✅ Successfully executed the `{signal}` command!",
+  "signal_error": "❌ Failed to execute the `{signal}` command!",
+
+  "perm_display_all": "**All servers**",
+  "perm_embed_title": "🛡️ Permission Management",
+  "perm_embed_desc": "Configuring permissions for {entity} on {server_name}.",
+  "perm_embed_owner_name": "👑 You are the bot owner",
+  "perm_embed_owner_value": "You have unconditional and full access to all actions.",
+  "perm_src_personal_global": "personal global rule",
+  "perm_src_role_global": "global rule for this role",
+  "perm_src_role_local": "permissions from the {role} role",
+  "perm_src_for_all": " for all servers",
+  "perm_status_allowed": "✅ Allowed",
+  "perm_status_denied": "❌ Denied",
+  "perm_status_allowed_inherited": "✅ Allowed *(inherited from {sources})*",
+  "perm_status_denied_inherited": "❌ Denied *(inherited from {sources})*",
+  "perm_status_not_set": "❔ Not set",
+  "perm_embed_field_name": "Permissions:",
+  "perm_embed_footer": "✅ Allowed • ❌ Denied • ❔ Not set",
+
+  "dash_embed_title": "🎮 Control Panel",
+  "dash_embed_title_server": "🎮 Control Panel - {server_name}",
+  "dash_embed_state": "State",
+  "dash_embed_cpu": "💻 CPU",
+  "dash_embed_ram": "🧠 RAM",
+  "dash_embed_disk": "💽 Disk",
+  "dash_embed_net_in": "⬇️ Network (In)",
+  "dash_embed_net_out": "⬆️ Network (Out)",
+  "dash_embed_uptime": "⏳ Uptime",
+  "dash_embed_footer": "Automatically updates every minute."
+}

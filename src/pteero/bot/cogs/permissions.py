@@ -57,6 +57,16 @@ class PermissionsCog(commands.Cog):
         """
         await interaction.response.defer(ephemeral=True)
 
+        server_info = await self.bot.ptero.get_server_info(server_id)
+        if not server_info and server_id != "ALL":
+            embed = disnake.Embed(
+                title="⚠️ Помилка",
+                description="Не вдалося під'єднатися до сервера.\nПеревірте ID сервера та спробуйте ще раз.",
+                color=disnake.Color.yellow(),
+            )
+            await interaction.followup.send(embed=embed)
+            return
+
         view = PermissionManageView(self.bot, entity, server_id)
         await view.load_state()
 

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import disnake
 
 from pteero.bot.utils import check_permission
+from pteero.core.i18n import _
 from pteero.core.repositories.permissions import PermissionAction
 from pteero.services.pterodactyl.schemas import PowerSignal
 
@@ -12,10 +13,26 @@ if TYPE_CHECKING:
     from pteero.bot.bot import PteeroBot
 
 POWER_ACTIONS: dict[PowerSignal, tuple[PermissionAction, str, str]] = {
-    PowerSignal.START: (PermissionAction.START, "▶️", "Запустити"),
-    PowerSignal.RESTART: (PermissionAction.RESTART, "🔄", "Перезапустити"),
-    PowerSignal.STOP: (PermissionAction.STOP, "⏹️", "Зупинити"),
-    PowerSignal.KILL: (PermissionAction.KILL, "☠️", "Примусово зупинити"),
+    PowerSignal.START: (
+        PermissionAction.START,
+        _("emoji_action_start"),
+        _("action_start"),
+    ),
+    PowerSignal.RESTART: (
+        PermissionAction.RESTART,
+        _("emoji_action_restart"),
+        _("action_restart"),
+    ),
+    PowerSignal.STOP: (
+        PermissionAction.STOP,
+        _("emoji_action_stop"),
+        _("action_stop"),
+    ),
+    PowerSignal.KILL: (
+        PermissionAction.KILL,
+        _("emoji_action_kill"),
+        _("action_kill"),
+    ),
 }
 
 
@@ -47,24 +64,24 @@ class PowerButton(disnake.ui.Button):
             self.view.bot, interaction.author, self.view.server_id, self.permission
         ):
             embed = disnake.Embed(
-                title="⚠️ Помилка",
-                description="У вас немає необхідних дозволів, щоби виконати цю дію.",
+                title=_("error_title"),
+                description=_("error_no_permission"),
                 color=disnake.Color.yellow(),
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
         await interaction.response.send_message(
-            f"⏳ Надсилаю сигнал `{self.signal.value}`...", ephemeral=True
+            _("signal_sending", signal=self.signal.value), ephemeral=True
         )
         success = await self.view.bot.ptero.send_power_signal(
             self.view.server_id, self.signal
         )
 
         await interaction.edit_original_response(
-            f"✅ Команду `{self.signal.value}` успішно виконано!"
+            _("signal_success", signal=self.signal.value)
             if success
-            else f"❌ Не вдалося виконати команду `{self.signal.value}`!"
+            else _("signal_error", signal=self.signal.value)
         )
 
 

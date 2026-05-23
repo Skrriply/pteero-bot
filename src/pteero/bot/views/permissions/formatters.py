@@ -3,14 +3,30 @@ from typing import Any
 
 import disnake
 
+from pteero.core.i18n import _
 from pteero.core.repositories.permissions import PermissionAction
 
-ACTION_LABELS: dict[PermissionAction, tuple[str, str]] = {
-    PermissionAction.START: ("▶️", "Запустити"),
-    PermissionAction.RESTART: ("🔄", "Перезапустити"),
-    PermissionAction.STOP: ("⏹️", "Зупинити"),
-    PermissionAction.KILL: ("☠️", "Примусово зупинити"),
-    PermissionAction.SPAWN_DASHBOARDS: ("📊", "Створення панелей"),
+PERMISSIONS_LABELS: dict[PermissionAction, tuple[str, str]] = {
+    PermissionAction.START: (
+        _("emoji_action_start"),
+        _("action_start"),
+    ),
+    PermissionAction.RESTART: (
+        _("emoji_action_restart"),
+        _("action_restart"),
+    ),
+    PermissionAction.STOP: (
+        _("emoji_action_stop"),
+        _("action_stop"),
+    ),
+    PermissionAction.KILL: (
+        _("emoji_action_kill"),
+        _("action_kill"),
+    ),
+    PermissionAction.SPAWN_DASHBOARDS: (
+        _("emoji_action_spawn"),
+        _("action_spawn_dashboards"),
+    ),
 }
 
 
@@ -38,21 +54,23 @@ def build_permissions_embed(
         A `disnake.Embed` object.
     """
     server_display = (
-        "**Усі сервери**"
+        _("perm_display_all")
         if server_id == "ALL"
         else (f"{server_name}(`{server_id}`)" if server_name else f"`{server_id}`")
     )
 
     embed = disnake.Embed(
-        title="🛡️ Керування дозволами",
-        description=f"Налаштування дозволів для {entity.mention} до {server_display}.",
+        title=_("perm_embed_title"),
+        description=_(
+            "perm_embed_desc", entity=entity.mention, server_name=server_display
+        ),
         color=disnake.Color.blurple(),
     )
 
     if is_owner:
         embed.add_field(
-            name="👑 Ви є власником бота",
-            value="Ви маєте безумовний і повний доступ до всіх дій.",
+            name=_("perm_embed_owner_name"),
+            value=_("perm_embed_owner_value"),
             inline=False,
         )
         return embed
@@ -73,48 +91,50 @@ def build_permissions_embed(
 
         if is_self:
             src_name = (
-                "особистого глобального правила"
+                _("perm_src_personal_global")
                 if isinstance(entity, (disnake.User, disnake.Member))
-                else "глобального правила цієї ролі"
+                else _("perm_src_role_global")
             )
         else:
-            role_repr = (
+            role_mention = (
                 "@everyone"
                 if row["entity_id"] == guild_id
                 else f"<@&{row['entity_id']}>"
             )
-            src_name = f"дозволів ролі {role_repr}"
+            src_name = _("perm_src_role_local", role=role_mention)
 
             if is_global:
-                src_name += " для всіх серверів"
+                src_name += _("perm_src_for_all")
 
         row_allows = PermissionAction(row["allows"])
         row_denies = PermissionAction(row["denies"])
 
-        for permission in ACTION_LABELS:
+        for permission in PERMISSIONS_LABELS:
             if permission in row_allows:
                 allow_sources[permission].append(src_name)
             if permission in row_denies:
                 deny_sources[permission].append(src_name)
 
     perms_text: list[str] = []
-    for action, (emoji, text) in ACTION_LABELS.items():
+    for action, (emoji, text) in PERMISSIONS_LABELS.items():
         if action in allowed:
-            status = "✅ Дозволено"
+            status = _("perm_status_allowed")
         elif action in denied:
-            status = "❌ Заборонено"
+            status = _("perm_status_denied")
         elif action_allow_srcs := allow_sources.get(action):
             sources_str = ", ".join(dict.fromkeys(action_allow_srcs))
-            status = f"✅ Дозволено *(успадковано від {sources_str})*"
+            status = _("perm_status_allowed_inherited", sources=sources_str)
         elif action_deny_srcs := deny_sources.get(action):
             sources_str = ", ".join(dict.fromkeys(action_deny_srcs))
-            status = f"❌ Заборонено *(успадковано від {sources_str})*"
+            status = _("perm_status_denied_inherited", sources=sources_str)
         else:
-            status = "❔Не задано"
+            status = _("perm_status_not_set")
 
         perms_text.append(f"{emoji} **{text}** - {status}")
 
-    embed.add_field(name="Дозволи:", value="\n".join(perms_text), inline=False)
-    embed.set_footer(text="✅ Дозволено • ❌ Заборонено • ❔ Не задано")
+    embed.add_field(
+        name=_("perm_embed_field_name"), value="\n".join(perms_text), inline=False
+    )
+    embed.set_footer(text=_("perm_embed_footer"))
 
     return embed

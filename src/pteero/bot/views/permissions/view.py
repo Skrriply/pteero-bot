@@ -6,7 +6,7 @@ import disnake
 
 from pteero.bot.utils import extract_role_ids
 from pteero.bot.views.permissions.formatters import (
-    ACTION_LABELS,
+    PERMISSIONS_LABELS,
     build_permissions_embed,
 )
 from pteero.core.repositories.permissions import PermissionAction
@@ -35,7 +35,7 @@ class PermissionButton(disnake.ui.Button["PermissionManageView"]):
             if is_denied
             else disnake.ButtonStyle.secondary
         )
-        emoji, label = ACTION_LABELS[permission]
+        emoji, label = PERMISSIONS_LABELS[permission]
 
         super().__init__(
             style=style,

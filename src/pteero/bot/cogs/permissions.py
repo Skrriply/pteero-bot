@@ -8,6 +8,7 @@ from disnake.ext import commands
 
 from pteero.bot.utils import get_server_suggestions
 from pteero.bot.views.permissions.view import PermissionManageView
+from pteero.core.i18n import _
 
 if TYPE_CHECKING:
     from pteero.bot.bot import PteeroBot
@@ -27,9 +28,7 @@ class PermissionsCog(commands.Cog):
         self.bot: PteeroBot = bot
 
     @commands.is_owner()
-    @commands.slash_command(
-        name="permissions", description="🛡️ Базова команда керування дозволами."
-    )
+    @commands.slash_command(name="permissions", description=_("cmd_perm_base_desc"))
     async def permissions_base(self, _: disnake.ApplicationCommandInteraction) -> None:
         """
         Base slash command for managing server permissions.
@@ -39,9 +38,7 @@ class PermissionsCog(commands.Cog):
         """
         pass
 
-    @permissions_base.sub_command(
-        name="manage", description="🛡️ Змінити дозволи користувача або ролі."
-    )
+    @permissions_base.sub_command(name="manage", description=_("cmd_perm_manage_desc"))
     async def manage_permission(
         self,
         interaction: disnake.ApplicationCommandInteraction,
@@ -60,8 +57,8 @@ class PermissionsCog(commands.Cog):
         server_info = await self.bot.ptero.get_server_info(server_id)
         if not server_info and server_id != "ALL":
             embed = disnake.Embed(
-                title="⚠️ Помилка",
-                description="Не вдалося під'єднатися до сервера.\nПеревірте ID сервера та спробуйте ще раз.",
+                title=_("error_title"),
+                description=_("error_connect"),
                 color=disnake.Color.yellow(),
             )
             await interaction.followup.send(embed=embed)
@@ -75,13 +72,13 @@ class PermissionsCog(commands.Cog):
 
     @manage_permission.autocomplete("server_id")
     async def manage_permission_autocomp(
-        self, _: disnake.ApplicationCommandInteraction, current: str
+        self, interaction: disnake.ApplicationCommandInteraction, current: str
     ) -> dict[str, str]:
         """
         Autocomplete for the `server_id` argument of the `manage` command.
 
         Args:
-            _: The Discord interaction object (unused).
+            interaction: The Discord interaction object (unused).
             current: The string the user is currently typing.
 
         Returns:
@@ -93,7 +90,7 @@ class PermissionsCog(commands.Cog):
         if not servers:
             return suggestions
 
-        global_label = "Усі сервери"
+        global_label = _("autocomplete_all_servers")
         current_lower = current.lower()
 
         if current_lower in global_label.lower() or current_lower in "all":

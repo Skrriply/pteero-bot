@@ -9,6 +9,7 @@ from disnake.ext import commands, tasks
 
 from pteero.bot.utils import check_permission, get_server_suggestions
 from pteero.bot.views.dashboard import DashboardView, build_dashboard_embed
+from pteero.core.i18n import _
 from pteero.core.repositories.permissions import PermissionAction
 
 if TYPE_CHECKING:
@@ -107,10 +108,7 @@ class DashboardCog(commands.Cog):
         await self.bot.wait_until_ready()
         await self._restore_dashboards()
 
-    @commands.slash_command(
-        name="dashboard",
-        description="📊 Створює панель керування для вказаного сервера.",
-    )
+    @commands.slash_command(name="dashboard", description=_("cmd_dashboard_desc"))
     async def spawn_dashboard(
         self, interaction: disnake.ApplicationCommandInteraction, server_id: str
     ) -> None:
@@ -127,8 +125,8 @@ class DashboardCog(commands.Cog):
         )
         if not is_authorized:
             embed = disnake.Embed(
-                title="⚠️ Помилка",
-                description="У вас немає необхідних дозволів, щоби виконати цю дію.",
+                title=_("error_title"),
+                description=_("error_no_permission"),
                 color=disnake.Color.yellow(),
             )
             await interaction.followup.send(embed=embed, ephemeral=True)
@@ -137,8 +135,8 @@ class DashboardCog(commands.Cog):
         resources = await self.bot.ptero.get_server_resources(server_id)
         if not resources:
             embed = disnake.Embed(
-                title="⚠️ Помилка",
-                description="Не вдалося під'єднатися до сервера.\nПеревірте ID сервера та спробуйте ще раз.",
+                title=_("error_title"),
+                description=_("error_connect"),
                 color=disnake.Color.yellow(),
             )
             await interaction.followup.send(embed=embed, ephemeral=True)

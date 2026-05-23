@@ -1,11 +1,10 @@
 import asyncio
-from pathlib import Path
 
 import disnake
 
 from pteero.bot.bot import PteeroBot
 from pteero.core.cache import CacheManager
-from pteero.core.config import settings
+from pteero.core.config import COGS_PATH, DATABASE_PATH, settings
 from pteero.core.database import DatabaseManager
 from pteero.core.http import AsyncHTTPClient
 from pteero.core.logger import setup_logging
@@ -13,10 +12,6 @@ from pteero.core.repositories import RepositoryContainer
 from pteero.core.repositories.dashboard import DashboardRepository
 from pteero.core.repositories.permissions import PermissionRepository
 from pteero.services.pterodactyl.client import PterodactylClient
-
-BASE_DIR: Path = Path(__file__).resolve().parent
-COGS_PATH: Path = BASE_DIR / "bot" / "cogs"
-DATABASE_PATH: Path = BASE_DIR / "data" / "pteero.db"
 
 
 async def main() -> None:

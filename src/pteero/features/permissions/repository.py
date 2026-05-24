@@ -80,7 +80,7 @@ class PermissionRepository:
         user_id: int,
         permission: PermissionAction,
         server_id: str,
-        role_ids: set[int] = set(),
+        role_ids: set[int] | None = None,
     ) -> bool:
         """Evaluates if a user (or any of their roles) is authorized for a specific action.
 
@@ -88,11 +88,12 @@ class PermissionRepository:
             user_id: The Discord ID of the user.
             permission: The specific `PermissionAction` flag to verify.
             server_id: The unique identifier of the Pterodactyl server or "ALL".
-            role_ids (optional): A set of Discord role IDs held by the user. Defaults to empty set.
+            role_ids (optional): A set of Discord role IDs held by the user. Defaults to `None`.
 
         Returns:
             `True` if the user or one of their roles has the requested permission, `False` otherwise.
         """
+        role_ids = role_ids if role_ids else set()
         entity_ids = [user_id, *role_ids]
         placeholders = ",".join("?" for _ in entity_ids)
 
@@ -135,18 +136,19 @@ class PermissionRepository:
         return False
 
     async def get_permission_sources(
-        self, entity_id: int, server_id: str, role_ids: set[int] = set()
+        self, entity_id: int, server_id: str, role_ids: set[int] | None = None
     ) -> list[dict[str, Any]]:
         """Fetches all layout database rule sets contributing to an entity's permission state.
 
         Args:
             user_id: The Discord ID of the user or role.
             server_id: The unique identifier of the Pterodactyl server or "ALL".
-            role_ids (optional): A set of Discord role IDs held by the user. Defaults to empty set.
+            role_ids (optional): A set of Discord role IDs held by the user. Defaults to `None`.
 
         Returns:
             A list of dictionary raw record rows.
         """
+        role_ids = role_ids if role_ids else set()
         entity_ids = {entity_id, *role_ids}
         placeholders = ",".join("?" for _ in entity_ids)
 

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import disnake
 
 if TYPE_CHECKING:
-    from pteero.bot.bot import PteeroBot
+    from pteero.bot import PteeroBot
     from pteero.core.repositories.permissions import PermissionAction
     from pteero.integrations.pterodactyl.schemas import ServerListResponse
 

@@ -2,7 +2,7 @@ import asyncio
 
 import disnake
 
-from pteero.bot.bot import PteeroBot
+from pteero.bot import PteeroBot
 from pteero.core.cache import CacheManager
 from pteero.core.config import COGS_PATH, DATABASE_PATH, settings
 from pteero.core.database import DatabaseManager

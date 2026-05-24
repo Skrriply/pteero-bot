@@ -4,15 +4,15 @@ from typing import TYPE_CHECKING, Literal
 
 import disnake
 
-from pteero.bot.utils import extract_role_ids
-from pteero.bot.views.permissions.formatters import (
+from pteero.core.repositories.permissions import PermissionAction
+from pteero.features.utils import extract_role_ids
+from pteero.features.views.permissions.formatters import (
     PERMISSIONS_LABELS,
     build_permissions_embed,
 )
-from pteero.core.repositories.permissions import PermissionAction
 
 if TYPE_CHECKING:
-    from pteero.bot.bot import PteeroBot
+    from pteero.bot import PteeroBot
 
 
 class PermissionButton(disnake.ui.Button["PermissionManageView"]):

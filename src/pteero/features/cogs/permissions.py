@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING
 import disnake
 from disnake.ext import commands
 
-from pteero.bot.utils import get_server_suggestions
-from pteero.bot.views.permissions.view import PermissionManageView
 from pteero.core.i18n import _
+from pteero.features.utils import get_server_suggestions
+from pteero.features.views.permissions.view import PermissionManageView
 
 if TYPE_CHECKING:
-    from pteero.bot.bot import PteeroBot
+    from pteero.bot import PteeroBot
 
 logger = logging.getLogger(__name__)
 

@@ -4,13 +4,13 @@ from typing import TYPE_CHECKING
 
 import disnake
 
-from pteero.bot.utils import check_permission
 from pteero.core.i18n import _
 from pteero.core.repositories.permissions import PermissionAction
+from pteero.features.utils import check_permission
 from pteero.integrations.pterodactyl.schemas import PowerSignal
 
 if TYPE_CHECKING:
-    from pteero.bot.bot import PteeroBot
+    from pteero.bot import PteeroBot
 
 POWER_ACTIONS: dict[PowerSignal, tuple[PermissionAction, str, str]] = {
     PowerSignal.START: (

@@ -15,7 +15,7 @@ from pteero.core.repositories.permissions import PermissionAction
 if TYPE_CHECKING:
     from pteero.bot.bot import PteeroBot
     from pteero.core.repositories.dashboard import DashboardRecord
-    from pteero.services.pterodactyl.schemas import ServerResourceResponse
+    from pteero.integrations.pterodactyl.schemas import ServerResourceResponse
 
 logger = logging.getLogger(__name__)
 

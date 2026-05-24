@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING
 
 import disnake
 from disnake.ext import commands
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from pteero.core.repositories import RepositoryContainer
     from pteero.core.repositories.dashboard import DashboardRepository
     from pteero.core.repositories.permissions import PermissionRepository
-    from pteero.services.pterodactyl import PterodactylClient
+    from pteero.integrations.pterodactyl.client import PterodactylClient
 
 logger = logging.getLogger(__name__)
 
@@ -66,10 +66,3 @@ class PteeroBot(commands.InteractionBot):
                 logger.info(f"Cog '{cog_name}' has been loaded!")
             except commands.ExtensionError as e:
                 logger.error(f"Failed to load the cog: '{file_path}'. Error: {e}")
-
-    @override
-    async def close(self) -> None:
-        """Overrides the default close method to close all API HTTP sessions."""
-        logger.info("Closing API HTTP sessions...")
-        await self.ptero.close()
-        await super().close()

@@ -10,7 +10,7 @@ import aiohttp
 from pydantic import ValidationError
 
 from pteero.core.cache import CacheManager
-from pteero.services.pterodactyl.schemas import (
+from pteero.integrations.pterodactyl.schemas import (
     PowerSignal,
     ServerListResponse,
     ServerMetaAttributes,

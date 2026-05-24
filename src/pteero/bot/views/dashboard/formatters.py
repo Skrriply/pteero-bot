@@ -1,7 +1,7 @@
 import disnake
 
 from pteero.core.i18n import _
-from pteero.services.pterodactyl.schemas import ServerResourceResponse, ServerState
+from pteero.integrations.pterodactyl.schemas import ServerResourceResponse, ServerState
 
 STATE_EMOJIS: dict[ServerState, str] = {
     ServerState.RUNNING: _("emoji_state_running"),

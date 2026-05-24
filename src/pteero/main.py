@@ -11,7 +11,7 @@ from pteero.core.logger import setup_logging
 from pteero.core.repositories import RepositoryContainer
 from pteero.core.repositories.dashboard import DashboardRepository
 from pteero.core.repositories.permissions import PermissionRepository
-from pteero.services.pterodactyl.client import PterodactylClient
+from pteero.integrations.pterodactyl.client import PterodactylClient
 
 
 async def main() -> None:

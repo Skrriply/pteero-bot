@@ -8,9 +8,9 @@ from pteero.core.config import COGS_PATH, DATABASE_PATH, settings
 from pteero.core.database import DatabaseManager
 from pteero.core.http import AsyncHTTPClient
 from pteero.core.logger import setup_logging
-from pteero.core.repositories import RepositoryContainer
-from pteero.core.repositories.dashboard import DashboardRepository
-from pteero.core.repositories.permissions import PermissionRepository
+from pteero.features import RepositoryContainer
+from pteero.features.dashboards.repository import DashboardRepository
+from pteero.features.permissions.repository import PermissionRepository
 from pteero.integrations.pterodactyl.client import PterodactylClient
 
 

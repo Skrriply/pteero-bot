@@ -7,7 +7,7 @@ import disnake
 
 if TYPE_CHECKING:
     from pteero.bot import PteeroBot
-    from pteero.core.repositories.permissions import PermissionAction
+    from pteero.features.permissions.repository import PermissionAction
     from pteero.integrations.pterodactyl.schemas import ServerListResponse
 
 logger = logging.getLogger(__name__)

@@ -8,13 +8,14 @@ import disnake
 from disnake.ext import commands, tasks
 
 from pteero.core.i18n import _
-from pteero.core.repositories.permissions import PermissionAction
+from pteero.features.dashboards.views.formatters import build_dashboard_embed
+from pteero.features.dashboards.views.view import DashboardView
+from pteero.features.permissions.repository import PermissionAction
 from pteero.features.utils import check_permission, get_server_suggestions
-from pteero.features.views.dashboard import DashboardView, build_dashboard_embed
 
 if TYPE_CHECKING:
     from pteero.bot import PteeroBot
-    from pteero.core.repositories.dashboard import DashboardRecord
+    from pteero.features.dashboards.repository import DashboardRecord
     from pteero.integrations.pterodactyl.schemas import ServerResourceResponse
 
 logger = logging.getLogger(__name__)

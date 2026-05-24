@@ -7,8 +7,8 @@ import disnake
 from disnake.ext import commands
 
 from pteero.core.i18n import _
+from pteero.features.permissions.views.view import PermissionManageView
 from pteero.features.utils import get_server_suggestions
-from pteero.features.views.permissions.view import PermissionManageView
 
 if TYPE_CHECKING:
     from pteero.bot import PteeroBot

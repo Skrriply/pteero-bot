@@ -9,9 +9,9 @@ from disnake.ext import commands
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from pteero.core.repositories import RepositoryContainer
-    from pteero.core.repositories.dashboard import DashboardRepository
-    from pteero.core.repositories.permissions import PermissionRepository
+    from pteero.features import RepositoryContainer
+    from pteero.features.dashboards.repository import DashboardRepository
+    from pteero.features.permissions.repository import PermissionRepository
     from pteero.integrations.pterodactyl.client import PterodactylClient
 
 logger = logging.getLogger(__name__)
@@ -56,13 +56,11 @@ class PteeroBot(commands.InteractionBot):
             logger.info("The directory doesn't exist! Skipping loading...")
             return
 
-        for file_path in cogs_dir.glob("*.py"):
-            if file_path.name.startswith("_"):
-                continue
+        for cog_file in cogs_dir.rglob("cog.py"):
+            feature_name = cog_file.parent.name
 
             try:
-                cog_name = file_path.stem
-                self.load_extension(f"pteero.bot.cogs.{cog_name}")
-                logger.info(f"Cog '{cog_name}' has been loaded!")
+                self.load_extension(f"pteero.features.{feature_name}.cog")
+                logger.info(f"Cog '{feature_name}' has been loaded!")
             except commands.ExtensionError as e:
-                logger.error(f"Failed to load the cog: '{file_path}'. Error: {e}")
+                logger.error(f"Failed to load the cog: '{cog_file}'. Error: {e}")

@@ -4,7 +4,7 @@ from typing import Any
 import disnake
 
 from pteero.core.i18n import _
-from pteero.core.repositories.permissions import PermissionAction
+from pteero.features.permissions.repository import PermissionAction
 
 PERMISSIONS_LABELS: dict[PermissionAction, tuple[str, str]] = {
     PermissionAction.START: (

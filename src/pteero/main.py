@@ -30,7 +30,7 @@ async def main() -> None:
         permissions=PermissionRepository(database),
         dashboards=DashboardRepository(database),
     )
-    pterodactl_client = PterodactylClient(
+    pterodactyl_client = PterodactylClient(
         http_client,
         cache_manager,
         settings.pterodactyl_url,
@@ -41,15 +41,10 @@ async def main() -> None:
     # Initializes the bot
     intents = disnake.Intents.none()
     intents.guilds = True
-    bot = PteeroBot(
-        repositories,
-        pterodactl_client,
-        owner_id=settings.discord_owner_id,
-        intents=intents,
-    )
+    bot = PteeroBot(owner_id=settings.discord_owner_id, intents=intents)
 
-    bot.add_cog(PermissionsCog(bot))
-    bot.add_cog(DashboardCog(bot))
+    bot.add_cog(DashboardCog(bot, repositories.dashboards, pterodactyl_client))
+    bot.add_cog(PermissionsCog(bot, repositories.permissions, pterodactyl_client))
 
     try:
         await http_client.connect()

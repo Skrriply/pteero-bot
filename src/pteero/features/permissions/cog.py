@@ -12,6 +12,8 @@ from pteero.features.utils import get_server_suggestions
 
 if TYPE_CHECKING:
     from pteero.bot import PteeroBot
+    from pteero.features.permissions.repository import PermissionRepository
+    from pteero.integrations.pterodactyl.client import PterodactylClient
 
 logger = logging.getLogger(__name__)
 
@@ -19,13 +21,22 @@ logger = logging.getLogger(__name__)
 class PermissionsCog(commands.Cog):
     """Cog for managing users permissions."""
 
-    def __init__(self, bot: PteeroBot) -> None:
+    def __init__(
+        self,
+        bot: PteeroBot,
+        permissions_repository: PermissionRepository,
+        pterodactyl_client: PterodactylClient,
+    ) -> None:
         """Initializes the class.
 
         Args:
             bot: The Discord bot instance.
+            permissions_repository: The database repository for managing permissions.
+            pterodactyl_client: The initialized client for the Pterodactyl.
         """
         self.bot: PteeroBot = bot
+        self.permissions: PermissionRepository = permissions_repository
+        self.ptero: PterodactylClient = pterodactyl_client
 
     @commands.is_owner()
     @commands.slash_command(name="permissions", description=_("cmd_perm_base_desc"))
@@ -54,7 +65,7 @@ class PermissionsCog(commands.Cog):
         """
         await interaction.response.defer(ephemeral=True)
 
-        server_info = await self.bot.ptero.get_server_info(server_id)
+        server_info = await self.ptero.get_server_info(server_id)
         if not server_info and server_id != "ALL":
             embed = disnake.Embed(
                 title=_("error_title"),
@@ -64,7 +75,9 @@ class PermissionsCog(commands.Cog):
             await interaction.followup.send(embed=embed)
             return
 
-        view = PermissionManageView(self.bot, entity, server_id)
+        view = PermissionManageView(
+            self.bot, self.permissions, self.ptero, entity, server_id
+        )
         await view.load_state()
 
         embed = await view.get_embed()
@@ -84,7 +97,7 @@ class PermissionsCog(commands.Cog):
         Returns:
             A dictionary of autocomplete suggestions.
         """
-        servers = await self.bot.ptero.get_servers()
+        servers = await self.ptero.get_servers()
         suggestions: dict[str, str] = {}
 
         if not servers:
@@ -100,12 +113,3 @@ class PermissionsCog(commands.Cog):
         suggestions.update(api_suggestions)
 
         return dict(list(suggestions.items())[:25])
-
-
-def setup(bot: PteeroBot) -> None:
-    """Loads the `PermissionsCog` into the bot.
-
-    Args:
-        bot: The Discord bot instance.
-    """
-    bot.add_cog(PermissionsCog(bot))

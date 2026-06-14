@@ -10,7 +10,7 @@ from pteero.features.utils import check_permission
 from pteero.integrations.pterodactyl.schemas import PowerSignal
 
 if TYPE_CHECKING:
-    from pteero.bot import PteeroBot
+    from pteero.integrations.pterodactyl.client import PterodactylClient
 
 POWER_ACTIONS: dict[PowerSignal, tuple[PermissionAction, str, str]] = {
     PowerSignal.START: (
@@ -74,7 +74,7 @@ class PowerButton(disnake.ui.Button):
         await interaction.response.send_message(
             _("signal_sending", signal=self.signal.value), ephemeral=True
         )
-        success = await self.view.bot.ptero.send_power_signal(
+        success = await self.view.ptero.send_power_signal(
             self.view.server_id, self.signal
         )
 
@@ -88,15 +88,15 @@ class PowerButton(disnake.ui.Button):
 class DashboardView(disnake.ui.View):
     """A dashboard view for a Pterodactyl server."""
 
-    def __init__(self, bot: PteeroBot, server_id: str) -> None:
+    def __init__(self, pterodactyl_client: PterodactylClient, server_id: str) -> None:
         """Initializes the class.
 
         Args:
-            bot: The Discord bot instance.
+            pterodactyl_client: The client for the Pterodactyl.
             server_id: The unique identifier of the Pterodactyl server to control.
         """
         super().__init__(timeout=None)
-        self.bot: PteeroBot = bot
+        self.ptero: PterodactylClient = pterodactyl_client
         self.server_id: str = server_id
 
         for key in POWER_ACTIONS:

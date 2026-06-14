@@ -15,7 +15,11 @@ from pteero.features.utils import check_permission, get_server_suggestions
 
 if TYPE_CHECKING:
     from pteero.bot import PteeroBot
-    from pteero.features.dashboards.repository import DashboardRecord
+    from pteero.features.dashboards.repository import (
+        DashboardRecord,
+        DashboardRepository,
+    )
+    from pteero.integrations.pterodactyl.client import PterodactylClient
     from pteero.integrations.pterodactyl.schemas import ServerResourceResponse
 
 logger = logging.getLogger(__name__)
@@ -24,13 +28,22 @@ logger = logging.getLogger(__name__)
 class DashboardCog(commands.Cog):
     """Cog for managing Pterodactyl server dashboards."""
 
-    def __init__(self, bot: PteeroBot) -> None:
+    def __init__(
+        self,
+        bot: PteeroBot,
+        dashboards_repository: DashboardRepository,
+        pterodactyl_client: PterodactylClient,
+    ) -> None:
         """Initializes the class.
 
         Args:
             bot: The Discord bot instance.
+            dashboards_repository: The database repository for managing dashboards.
+            pterodactyl_client: The initialized client for the Pterodactyl.
         """
         self.bot: PteeroBot = bot
+        self.dashboards: DashboardRepository = dashboards_repository
+        self.ptero: PterodactylClient = pterodactyl_client
         self._previous_resources: dict[int, ServerResourceResponse] = {}
         self.update_dashboards.start()
 
@@ -40,10 +53,10 @@ class DashboardCog(commands.Cog):
 
     async def _restore_dashboards(self) -> None:
         """Restores dashboard views from the database upon bot restart."""
-        records = await self.bot.dashboards.get_all()
+        records = await self.dashboards.get_all()
 
         for record in records:
-            view = DashboardView(self.bot, record.server_id)
+            view = DashboardView(self.ptero, record.server_id)
             self.bot.add_view(view, message_id=record.message_id)
 
         logger.info(
@@ -57,7 +70,7 @@ class DashboardCog(commands.Cog):
             record: The dashboard database record to update.
         """
         previous_resources = self._previous_resources.get(record.message_id)
-        resources = await self.bot.ptero.get_server_resources(record.server_id)
+        resources = await self.ptero.get_server_resources(record.server_id)
         if not resources or resources == previous_resources:
             return
 
@@ -67,7 +80,7 @@ class DashboardCog(commands.Cog):
             )
             message = channel.get_partial_message(record.message_id)
 
-            server_info = await self.bot.ptero.get_server_info(record.server_id)
+            server_info = await self.ptero.get_server_info(record.server_id)
             embed = build_dashboard_embed(
                 resources, server_info.name if server_info else None
             )
@@ -78,7 +91,7 @@ class DashboardCog(commands.Cog):
             logger.warning(
                 f"Dashboard message '{record.message_id}' was deleted by a user. Removing from the database."
             )
-            await self.bot.dashboards.remove(record.message_id)
+            await self.dashboards.remove(record.message_id)
             self._previous_resources.pop(record.message_id, None)
         except disnake.HTTPException as e:
             logger.error(
@@ -88,7 +101,7 @@ class DashboardCog(commands.Cog):
     @tasks.loop(seconds=60.0)
     async def update_dashboards(self) -> None:
         """Background task that updates server dashboards."""
-        records = await self.bot.dashboards.get_all()
+        records = await self.dashboards.get_all()
 
         try:
             async with asyncio.TaskGroup() as task_group:
@@ -133,7 +146,7 @@ class DashboardCog(commands.Cog):
             await interaction.followup.send(embed=embed, ephemeral=True)
             return
 
-        resources = await self.bot.ptero.get_server_resources(server_id)
+        resources = await self.ptero.get_server_resources(server_id)
         if not resources:
             embed = disnake.Embed(
                 title=_("error_title"),
@@ -143,14 +156,14 @@ class DashboardCog(commands.Cog):
             await interaction.followup.send(embed=embed, ephemeral=True)
             return
 
-        server_info = await self.bot.ptero.get_server_info(server_id)
+        server_info = await self.ptero.get_server_info(server_id)
         embed = build_dashboard_embed(
             resources, server_info.name if server_info else None
         )
-        view = DashboardView(self.bot, server_id)
+        view = DashboardView(self.ptero, server_id)
 
         message = await interaction.followup.send(embed=embed, view=view, wait=True)
-        await self.bot.dashboards.add(server_id, interaction.channel_id, message.id)
+        await self.dashboards.add(server_id, interaction.channel_id, message.id)
 
         logger.info(f"Successfully saved dashboard for '{server_id}' to the database.")
 
@@ -168,18 +181,9 @@ class DashboardCog(commands.Cog):
         Returns:
             A dictionary of autocomplete suggestions.
         """
-        servers = await self.bot.ptero.get_servers()
+        servers = await self.ptero.get_servers()
 
         if not servers:
             return {}
 
         return await get_server_suggestions(servers, current)
-
-
-def setup(bot: PteeroBot) -> None:
-    """Loads the `DashboardCog` into the bot.
-
-    Args:
-        bot: The Discord bot instance.
-    """
-    bot.add_cog(DashboardCog(bot))

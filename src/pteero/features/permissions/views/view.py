@@ -4,7 +4,10 @@ from typing import TYPE_CHECKING, Literal
 
 import disnake
 
-from pteero.features.permissions.repository import PermissionAction
+from pteero.features.permissions.repository import (
+    PermissionAction,
+    PermissionRepository,
+)
 from pteero.features.permissions.views.formatters import (
     PERMISSIONS_LABELS,
     build_permissions_embed,
@@ -13,6 +16,7 @@ from pteero.features.utils import extract_role_ids
 
 if TYPE_CHECKING:
     from pteero.bot import PteeroBot
+    from pteero.integrations.pterodactyl.client import PterodactylClient
 
 
 class PermissionButton(disnake.ui.Button["PermissionManageView"]):
@@ -52,7 +56,7 @@ class PermissionButton(disnake.ui.Button["PermissionManageView"]):
             interaction: The interaction context from the button press.
         """
         self.view.toggle_permission(self.permission)
-        await self.view.bot.permissions.set_permission(
+        await self.view.permissions.set_permission(
             self.view.entity.id,
             self.view.entity_type,
             self.view.allowed,
@@ -70,6 +74,8 @@ class PermissionManageView(disnake.ui.View):
     def __init__(
         self,
         bot: PteeroBot,
+        permissions: PermissionRepository,
+        pterodactyl_client: PterodactylClient,
         entity: disnake.User | disnake.Member | disnake.Role,
         server_id: str,
     ) -> None:
@@ -77,11 +83,15 @@ class PermissionManageView(disnake.ui.View):
 
         Args:
             bot: The Discord bot instance.
+            permissions_repository: The database repository for managing permissions.
+            pterodactyl_client: The initialized client for the Pterodactyl.
             entity: The target Discord user, member, or role to modify.
             server_id: The unique identifier of the Pterodactyl server or "ALL".
         """
         super().__init__(timeout=180)
         self.bot: PteeroBot = bot
+        self.permissions: PermissionRepository = permissions
+        self.ptero: PterodactylClient = pterodactyl_client
         self.entity: disnake.User | disnake.Member | disnake.Role = entity
         self.entity_type: Literal["user", "role"] = (
             "role" if isinstance(entity, disnake.Role) else "user"
@@ -106,7 +116,7 @@ class PermissionManageView(disnake.ui.View):
 
     async def load_state(self) -> None:
         """Loads raw bitwise permissions for the entity from the database."""
-        self.allowed, self.denied = await self.bot.permissions.get_raw_permissions(
+        self.allowed, self.denied = await self.permissions.get_raw_permissions(
             self.entity.id, self.server_id
         )
 
@@ -133,7 +143,7 @@ class PermissionManageView(disnake.ui.View):
         self._add_buttons()
 
         role_ids: set[int] = extract_role_ids(self.entity)
-        sources = await self.bot.permissions.get_permission_sources(
+        sources = await self.permissions.get_permission_sources(
             self.entity.id, self.server_id, role_ids=role_ids
         )
         is_owner = (
@@ -141,7 +151,7 @@ class PermissionManageView(disnake.ui.View):
             if isinstance(self.entity, disnake.Role)
             else await self.bot.is_owner(self.entity)
         )
-        server_info = await self.bot.ptero.get_server_info(self.server_id)
+        server_info = await self.ptero.get_server_info(self.server_id)
 
         embed = build_permissions_embed(
             self.entity,

@@ -7,4 +7,4 @@ echo "Using $(python --version)"
 echo "Using $(uv --version)"
 
 echo ":/home/container$ ${STARTUP}"
-eval "exec ${STARTUP}"
+eval ${STARTUP}

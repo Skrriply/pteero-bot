@@ -4,12 +4,14 @@ import disnake
 
 from pteero.bot import PteeroBot
 from pteero.core.cache import CacheManager
-from pteero.core.config import COGS_PATH, DATABASE_PATH, settings
+from pteero.core.config import DATABASE_PATH, settings
 from pteero.core.database import DatabaseManager
 from pteero.core.http import AsyncHTTPClient
 from pteero.core.logger import setup_logging
 from pteero.features import RepositoryContainer
+from pteero.features.dashboards.cog import DashboardCog
 from pteero.features.dashboards.repository import DashboardRepository
+from pteero.features.permissions.cog import PermissionsCog
 from pteero.features.permissions.repository import PermissionRepository
 from pteero.integrations.pterodactyl.client import PterodactylClient
 
@@ -46,11 +48,13 @@ async def main() -> None:
         intents=intents,
     )
 
+    bot.add_cog(PermissionsCog(bot))
+    bot.add_cog(DashboardCog(bot))
+
     try:
         await http_client.connect()
         await database.connect()
         await repositories.setup_schemas()
-        bot.load_cogs(COGS_PATH)
         await bot.start(settings.discord_token.get_secret_value())
     finally:
         await http_client.close()

@@ -5,7 +5,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR: Path = Path(__file__).resolve().parent.parent
 LOCALES_PATH: Path = BASE_DIR / "locales"
-COGS_PATH: Path = BASE_DIR / "features"
 DATABASE_PATH: Path = BASE_DIR / "data" / "pteero.db"
 
 

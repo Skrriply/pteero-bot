@@ -1,6 +1,6 @@
 [project]
 name = "pteero"
-version = "0.2.0"
+version = "0.2.1"
 description = "A Discord bot for managing self-hosted game servers."
 readme = "README.md"
 requires-python = ">=3.14"

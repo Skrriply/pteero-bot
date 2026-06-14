@@ -7,7 +7,10 @@ import disnake
 
 if TYPE_CHECKING:
     from pteero.bot import PteeroBot
-    from pteero.features.permissions.repository import PermissionAction
+    from pteero.features.permissions.repository import (
+        PermissionAction,
+        PermissionRepository,
+    )
     from pteero.integrations.pterodactyl.schemas import ServerListResponse
 
 logger = logging.getLogger(__name__)
@@ -33,6 +36,7 @@ def extract_role_ids(entity: disnake.User | disnake.Member | disnake.Role) -> se
 
 async def check_permission(
     bot: PteeroBot,
+    permissions_repository: PermissionRepository,
     user: disnake.User | disnake.Member,
     server_id: str,
     permission: PermissionAction,
@@ -41,6 +45,7 @@ async def check_permission(
 
     Args:
         bot: The Discord bot instance.
+        permissions_repository: The database repository for managing permissions.
         user: The Discord user or member to evaluate.
         server_id: The Pterodactyl server ID.
         permission: The specific `PermissionAction` flag to verify.
@@ -51,7 +56,7 @@ async def check_permission(
     if await bot.is_owner(user):
         return True
 
-    return await bot.permissions.has_server_permission(
+    return await permissions_repository.has_server_permission(
         user.id,
         permission,
         server_id,

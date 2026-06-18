@@ -43,7 +43,11 @@ async def main() -> None:
     intents.guilds = True
     bot = PteeroBot(owner_id=settings.discord_owner_id, intents=intents)
 
-    bot.add_cog(DashboardCog(bot, repositories.dashboards, pterodactyl_client))
+    bot.add_cog(
+        DashboardCog(
+            bot, repositories.dashboards, repositories.permissions, pterodactyl_client
+        )
+    )
     bot.add_cog(PermissionsCog(bot, repositories.permissions, pterodactyl_client))
 
     try:

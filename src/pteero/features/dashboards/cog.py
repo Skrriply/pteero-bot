@@ -10,7 +10,10 @@ from disnake.ext import commands, tasks
 from pteero.core.i18n import _
 from pteero.features.dashboards.views.formatters import build_dashboard_embed
 from pteero.features.dashboards.views.view import DashboardView
-from pteero.features.permissions.repository import PermissionAction
+from pteero.features.permissions.repository import (
+    PermissionAction,
+    PermissionRepository,
+)
 from pteero.features.utils import check_permission, get_server_suggestions
 
 if TYPE_CHECKING:
@@ -32,6 +35,7 @@ class DashboardCog(commands.Cog):
         self,
         bot: PteeroBot,
         dashboards_repository: DashboardRepository,
+        permissions_repository: PermissionRepository,
         pterodactyl_client: PterodactylClient,
     ) -> None:
         """Initializes the class.
@@ -43,6 +47,7 @@ class DashboardCog(commands.Cog):
         """
         self.bot: PteeroBot = bot
         self.dashboards: DashboardRepository = dashboards_repository
+        self.permissions: PermissionRepository = permissions_repository
         self.ptero: PterodactylClient = pterodactyl_client
         self._previous_resources: dict[int, ServerResourceResponse] = {}
         self.update_dashboards.start()
@@ -135,7 +140,11 @@ class DashboardCog(commands.Cog):
         await interaction.response.defer()
 
         is_authorized = await check_permission(
-            self.bot, interaction.author, server_id, PermissionAction.SPAWN_DASHBOARDS
+            self.bot,
+            self.permissions,
+            interaction.author,
+            server_id,
+            PermissionAction.SPAWN_DASHBOARDS,
         )
         if not is_authorized:
             embed = disnake.Embed(

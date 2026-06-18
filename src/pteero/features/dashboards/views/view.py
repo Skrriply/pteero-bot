@@ -61,7 +61,11 @@ class PowerButton(disnake.ui.Button):
             interaction: The interaction context from the button press.
         """
         if not await check_permission(
-            self.view.bot, interaction.author, self.view.server_id, self.permission
+            self.view.bot,
+            self.view.permissions,
+            interaction.author,
+            self.view.server_id,
+            self.permission,
         ):
             embed = disnake.Embed(
                 title=_("error_title"),

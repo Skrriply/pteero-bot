@@ -21,8 +21,8 @@ Repository = "https://github.com/Skrriply/pteero-bot.git"
 
 [dependency-groups]
 dev = [
-    "basedpyright>=1.39.7",
-    "prek>=0.4.4",
+    "basedpyright>=1.39.8",
+    "prek>=0.4.5",
     "ruff>=0.15.17",
 ]
 

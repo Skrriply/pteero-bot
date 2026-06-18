@@ -43,6 +43,7 @@ class DashboardCog(commands.Cog):
         Args:
             bot: The Discord bot instance.
             dashboards_repository: The database repository for managing dashboards.
+            permissions_repository: The database repository for managing permissions.
             pterodactyl_client: The initialized client for the Pterodactyl.
         """
         self.bot: PteeroBot = bot
@@ -61,7 +62,9 @@ class DashboardCog(commands.Cog):
         records = await self.dashboards.get_all()
 
         for record in records:
-            view = DashboardView(self.ptero, record.server_id)
+            view = DashboardView(
+                self.bot, self.permissions, self.ptero, record.server_id
+            )
             self.bot.add_view(view, message_id=record.message_id)
 
         logger.info(
@@ -169,7 +172,7 @@ class DashboardCog(commands.Cog):
         embed = build_dashboard_embed(
             resources, server_info.name if server_info else None
         )
-        view = DashboardView(self.ptero, server_id)
+        view = DashboardView(self.bot, self.permissions, self.ptero, server_id)
 
         message = await interaction.followup.send(embed=embed, view=view, wait=True)
         await self.dashboards.add(server_id, interaction.channel_id, message.id)

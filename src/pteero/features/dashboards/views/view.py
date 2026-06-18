@@ -5,11 +5,15 @@ from typing import TYPE_CHECKING
 import disnake
 
 from pteero.core.i18n import _
-from pteero.features.permissions.repository import PermissionAction
+from pteero.features.permissions.repository import (
+    PermissionAction,
+    PermissionRepository,
+)
 from pteero.features.utils import check_permission
 from pteero.integrations.pterodactyl.schemas import PowerSignal
 
 if TYPE_CHECKING:
+    from pteero.bot import PteeroBot
     from pteero.integrations.pterodactyl.client import PterodactylClient
 
 POWER_ACTIONS: dict[PowerSignal, tuple[PermissionAction, str, str]] = {
@@ -39,12 +43,27 @@ POWER_ACTIONS: dict[PowerSignal, tuple[PermissionAction, str, str]] = {
 class PowerButton(disnake.ui.Button):
     """Button for handling Pterodactyl power actions."""
 
-    def __init__(self, signal: PowerSignal) -> None:
+    def __init__(
+        self,
+        bot: PteeroBot,
+        permissions_repository: PermissionRepository,
+        pterodactyl_client: PterodactylClient,
+        server_id: str,
+        signal: PowerSignal,
+    ) -> None:
         """Initializes the class.
 
         Args:
+            bot: The Discord bot instance.
+            permissions_repository: The database repository for managing permissions.
+            pterodactyl_client: The client for the Pterodactyl.
+            server_id: The unique identifier of the Pterodactyl server to control.
             signal: The power signal configuration determining the button's behavior.
         """
+        self.bot: PteeroBot = bot
+        self.permissions: PermissionRepository = permissions_repository
+        self.ptero: PterodactylClient = pterodactyl_client
+        self.server_id: str = server_id
         self.signal: PowerSignal = signal
         self.permission, emoji, label = POWER_ACTIONS[signal]
         super().__init__(
@@ -61,10 +80,10 @@ class PowerButton(disnake.ui.Button):
             interaction: The interaction context from the button press.
         """
         if not await check_permission(
-            self.view.bot,
-            self.view.permissions,
+            self.bot,
+            self.permissions,
             interaction.author,
-            self.view.server_id,
+            self.server_id,
             self.permission,
         ):
             embed = disnake.Embed(
@@ -78,9 +97,7 @@ class PowerButton(disnake.ui.Button):
         await interaction.response.send_message(
             _("signal_sending", signal=self.signal.value), ephemeral=True
         )
-        success = await self.view.ptero.send_power_signal(
-            self.view.server_id, self.signal
-        )
+        success = await self.ptero.send_power_signal(self.server_id, self.signal)
 
         await interaction.edit_original_response(
             _("signal_success", signal=self.signal.value)
@@ -92,16 +109,26 @@ class PowerButton(disnake.ui.Button):
 class DashboardView(disnake.ui.View):
     """A dashboard view for a Pterodactyl server."""
 
-    def __init__(self, pterodactyl_client: PterodactylClient, server_id: str) -> None:
+    def __init__(
+        self,
+        bot: PteeroBot,
+        permissions_repository: PermissionRepository,
+        pterodactyl_client: PterodactylClient,
+        server_id: str,
+    ) -> None:
         """Initializes the class.
 
         Args:
+            bot: The Discord bot instance.
+            permissions_repository: The database repository for managing permissions.
             pterodactyl_client: The client for the Pterodactyl.
             server_id: The unique identifier of the Pterodactyl server to control.
         """
         super().__init__(timeout=None)
-        self.ptero: PterodactylClient = pterodactyl_client
-        self.server_id: str = server_id
 
-        for key in POWER_ACTIONS:
-            self.add_item(PowerButton(key))
+        for signal in POWER_ACTIONS:
+            self.add_item(
+                PowerButton(
+                    bot, permissions_repository, pterodactyl_client, server_id, signal
+                )
+            )
